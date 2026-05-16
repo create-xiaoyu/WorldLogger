@@ -1,8 +1,11 @@
+import com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar
+
 plugins {
     id 'java-library'
     id 'maven-publish'
     id 'net.neoforged.moddev' version '2.0.141'
     id 'idea'
+    id 'com.gradleup.shadow' version '9.4.1'
 }
 
 tasks.named('wrapper', Wrapper).configure {
@@ -109,31 +112,27 @@ neoForge {
 // a dependency that will be present for runtime testing but that is
 // "optional", meaning it will not be pulled by dependents of this mod.
 configurations {
-    runtimeClasspath.extendsFrom localRuntime
+    shadowImpl
 }
 
 dependencies {
-    // Example optional mod dependency with JEI
-    // The JEI API is declared for compile time use, while the full JEI artifact is used at runtime
-    // compileOnly "mezz.jei:jei-${mc_version}-common-api:${jei_version}"
-    // compileOnly "mezz.jei:jei-${mc_version}-neoforge-api:${jei_version}"
-    // We add the full version to localRuntime, not runtimeOnly, so that we do not publish a dependency on it
-    // localRuntime "mezz.jei:jei-${mc_version}-neoforge:${jei_version}"
+    shadowImpl("com.mysql:mysql-connector-j:9.6.0") {
+        exclude group: "org.slf4j"
+    }
 
-    // Example mod dependency using a mod jar from ./libs with a flat dir repository
-    // This maps to ./libs/coolmod-${mc_version}-${coolmod_version}.jar
-    // The group id is ignored when searching -- in this case, it is "blank"
-    // implementation "blank:coolmod-${mc_version}:${coolmod_version}"
+    shadowImpl("com.zaxxer:HikariCP:6.2.1") {
+        exclude group: "org.slf4j"
+    }
 
-    // Example mod dependency using a file as dependency
-    // implementation files("libs/coolmod-${mc_version}-${coolmod_version}.jar")
+    implementation("com.mysql:mysql-connector-j:9.6.0")
+    implementation("com.zaxxer:HikariCP:6.2.1")
+}
 
-    // Example project dependency using a sister or child project:
-    // implementation project(":myproject")
+tasks.named('shadowJar', ShadowJar) {
+    configurations = [project.configurations.shadowImpl]
+    archiveClassifier.set('')
 
-    // For more info:
-    // http://www.gradle.org/docs/current/userguide/artifact_dependencies_tutorial.html
-    // http://www.gradle.org/docs/current/userguide/dependency_management.html
+    exclude 'org/slf4j/**'
 }
 
 // This block of code expands all declared replace properties in the specified resource targets.
