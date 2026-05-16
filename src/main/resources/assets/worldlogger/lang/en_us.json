@@ -1,0 +1,13 @@
+{
+  "itemGroup.worldlogger": "Example Mod Tab",
+  "block.worldlogger.example_block": "Example Block",
+  "item.worldlogger.example_item": "Example Item",
+
+  "worldlogger.configuration.title": "WorldLogger Configs",
+  "worldlogger.configuration.section.worldlogger.common.toml": "WorldLogger Configs",
+  "worldlogger.configuration.section.worldlogger.common.toml.title": "WorldLogger Configs",
+  "worldlogger.configuration.items": "Item List",
+  "worldlogger.configuration.logDirtBlock": "Log Dirt Block",
+  "worldlogger.configuration.magicNumberIntroduction": "Magic Number Text",
+  "worldlogger.configuration.magicNumber": "Magic Number"
+}
