@@ -40,7 +40,7 @@ authors="create_xiaoyu"
 
 # The description text for the mod (multi line!) (#mandatory)
 description='''
-Example mod description.
+记录世界内某些更改。
 '''
 
 # The [[mixins]] block allows you to declare your mixin config to FML so that it gets loaded.
