@@ -52,11 +52,16 @@ public class DataBase {
                             data_id INT AUTO_INCREMENT PRIMARY KEY,
                             player_uuid VARCHAR(36) NOT NULL,
                             player_name VARCHAR(16) NOT NULL,
+                            player_death_type VARCHAR(16) NOT NULL,
                             player_death_time DATETIME,
                             player_death_pos VARCHAR(64),
                             player_death_world VARCHAR(64),
-                            player_death_source TEXT,
-                            player_death_lost_xp DOUBLE,
+                            player_death_source_name VARCHAR(64),
+                            player_death_source_pos VARCHAR(64),
+                            player_death_source_world VARCHAR(64),
+                            player_death_source_item VARCHAR(64),
+                            player_death_message VARCHAR(64),
+                            player_death_lost_xp INT,
                             player_death_lost_item TEXT
                         )
                         """
