@@ -26,6 +26,9 @@ public class MySQLExecutorService {
                 }
             } catch (InterruptedException e) {
                 executor.shutdownNow();
+                Thread.currentThread().interrupt();
+            } finally {
+                executor = null;
             }
         }
     }
