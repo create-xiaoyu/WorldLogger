@@ -10,7 +10,7 @@ import java.sql.Statement;
 public class DataBase {
     private static final Logger LOGGER = LogUtils.getLogger();
 
-    public static void InitDataBase(Connection mysqlConnection) {
+    public static void InitDataBaseTable(Connection mysqlConnection) {
         try (Statement statement = mysqlConnection.createStatement()) {
             statement.execute(
                     """
@@ -23,13 +23,23 @@ public class DataBase {
             );
             statement.execute(
                     """
-                        CREATE TABLE IF NOT EXISTS PLAYER_SESSION_INFO(
+                        CREATE TABLE IF NOT EXISTS PLAYER_LOGIN_INFO(
                             data_id INT AUTO_INCREMENT PRIMARY KEY,
                             player_uuid VARCHAR(36) NOT NULL,
                             player_name VARCHAR(16) NOT NULL,
+                            player_IP VARCHAR(32),
                             player_login_time DATETIME,
                             player_login_pos VARCHAR(64),
-                            player_login_world VARCHAR(64),
+                            player_login_world VARCHAR(64)
+                        )
+                        """
+            );
+            statement.execute(
+                    """
+                        CREATE TABLE IF NOT EXISTS PLAYER_LOGOUT_INFO(
+                            data_id INT AUTO_INCREMENT PRIMARY KEY,
+                            player_uuid VARCHAR(36) NOT NULL,
+                            player_name VARCHAR(16) NOT NULL,
                             player_logout_time DATETIME,
                             player_logout_pos VARCHAR(64),
                             player_logout_world VARCHAR(64)
