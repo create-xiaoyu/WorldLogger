@@ -1,6 +1,6 @@
 package com.xiaoyu.worldlogger;
 
-import com.xiaoyu.worldlogger.event.PlayerEvent.PlayerLoggedInEvent.WriteTable.PlayerInfo;
+import com.xiaoyu.worldlogger.writetable.PlayerInfo;
 import com.xiaoyu.worldlogger.mysql.DataBase;
 import com.xiaoyu.worldlogger.mysql.InitMySQL;
 import com.xiaoyu.worldlogger.mysql.MySQLExecutorService;

@@ -1,4 +1,4 @@
-package com.xiaoyu.worldlogger.event.PlayerEvent.PlayerLoggedInEvent.WriteTable;
+package com.xiaoyu.worldlogger.writetable;
 
 import com.mojang.logging.LogUtils;
 import com.xiaoyu.worldlogger.data.PlayerSessionData;
@@ -19,7 +19,7 @@ public class PlayerInfo {
     private static final Logger LOGGER = LogUtils.getLogger();
 
     @SubscribeEvent
-    public static void PLAYER_BASE_INFO(PlayerEvent.PlayerLoggedInEvent event) {
+    public static void PLAYER_BASE_LOGIN_INFO(PlayerEvent.PlayerLoggedInEvent event) {
         if (!(event.getEntity() instanceof ServerPlayer player)) return;
         Level level = player.level();
 
