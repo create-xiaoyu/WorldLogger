@@ -1,5 +1,6 @@
 package com.xiaoyu.worldlogger;
 
+import com.xiaoyu.worldlogger.writetable.PlayerDeathInfo;
 import com.xiaoyu.worldlogger.writetable.PlayerInfo;
 import com.xiaoyu.worldlogger.mysql.DataBase;
 import com.xiaoyu.worldlogger.mysql.InitMySQL;
@@ -30,6 +31,7 @@ public class WorldLogger {
             NeoForge.EVENT_BUS.addListener(WorldLogger::onServerStopped);
 
             NeoForge.EVENT_BUS.register(PlayerInfo.class);
+            NeoForge.EVENT_BUS.register(PlayerDeathInfo.class);
         }
 
         container.registerConfig(ModConfig.Type.COMMON, Config.SPEC);
