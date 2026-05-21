@@ -45,7 +45,6 @@ public class PlayerDeathInfo {
                          player_uuid,
                          player_name,
                          player_death_type,
-                         player_death_time,
                          player_death_pos,
                          player_death_world,
                          player_death_source_name,
@@ -53,7 +52,7 @@ public class PlayerDeathInfo {
                          player_death_source_world,
                          player_death_source_item,
                          player_death_message
-                     ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                     ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                      """;
 
         MySQLExecutorService.getExecutor().execute(() -> {
@@ -62,14 +61,13 @@ public class PlayerDeathInfo {
                     statement.setString(1, playerData.uuid);
                     statement.setString(2, playerData.name);
                     statement.setString(3, deathType);
-                    statement.setString(4, playerData.time);
-                    statement.setString(5, playerData.pos);
-                    statement.setString(6, playerData.world);
-                    statement.setString(7, deathData.sourceName);
-                    statement.setString(8, deathData.sourcePos);
-                    statement.setString(9, deathData.sourceWorld);
-                    statement.setString(10, deathData.sourceItem);
-                    statement.setString(11, deathData.deathMessage);
+                    statement.setString(4, playerData.pos);
+                    statement.setString(5, playerData.world);
+                    statement.setString(6, deathData.sourceName);
+                    statement.setString(7, deathData.sourcePos);
+                    statement.setString(8, deathData.sourceWorld);
+                    statement.setString(9, deathData.sourceItem);
+                    statement.setString(10, deathData.deathMessage);
 
                     statement.executeUpdate();
                 } catch (SQLException e) {
@@ -131,7 +129,6 @@ public class PlayerDeathInfo {
                      player_uuid,
                      player_name,
                      player_lost_type,
-                     player_lost_item_time,
                      player_lost_pos,
                      player_lost_world,
                      player_lost_item
@@ -144,10 +141,9 @@ public class PlayerDeathInfo {
                     statement.setString(1, data.uuid);
                     statement.setString(2, data.name);
                     statement.setString(3, "Death");
-                    statement.setString(4, data.time);
-                    statement.setString(5, data.pos);
-                    statement.setString(6, data.world);
-                    statement.setString(7, items);
+                    statement.setString(4, data.pos);
+                    statement.setString(5, data.world);
+                    statement.setString(6, items);
 
                     statement.executeUpdate();
                 } catch (SQLException e) {
@@ -174,12 +170,11 @@ public class PlayerDeathInfo {
                          player_uuid,
                          player_name,
                          player_xp_change_type,
-                         player_xp_change_time,
                          player_xp_change_count,
                          player_xp_change_pos,
                          player_xp_change_world,
                          player_xp_count
-                     ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+                     ) VALUES (?, ?, ?, ?, ?, ?, ?)
                      """;
 
         MySQLExecutorService.getExecutor().execute(() -> {
@@ -188,11 +183,10 @@ public class PlayerDeathInfo {
                    statement.setString(1, data.uuid);
                    statement.setString(2, data.name);
                    statement.setString(3, "Death");
-                   statement.setString(4, data.time);
-                   statement.setInt(5, XP);
-                   statement.setString(6, data.pos);
-                   statement.setString(7, data.world);
-                   statement.setInt(8, XPCount);
+                   statement.setInt(4, XP);
+                   statement.setString(5, data.pos);
+                   statement.setString(6, data.world);
+                   statement.setInt(7, XPCount);
 
                    statement.executeUpdate();
                } catch (SQLException e) {

@@ -13,7 +13,7 @@ import java.time.format.DateTimeFormatter;
 
 public class StringData {
     public static String getLevelName(Level level) {
-        return String.format("[%s], %S", level.getDescription().getString(), level.dimension().identifier());
+        return String.format("[%s], %s", level.getDescription().getString(), level.dimension().identifier());
     }
 
     public static String getPos(Entity entity) {
