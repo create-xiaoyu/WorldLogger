@@ -60,10 +60,10 @@ public class ExecuteCommandInfo {
 
         String SQL = """
                      INSERT INTO EXECUTE_COMMAND_INFO(
-                         execute_source,
-                         execute_pos,
-                         execute_world,
-                         execute_command
+                         source,
+                         pos,
+                         world,
+                         command
                      ) VALUES (?, ?, ?, ?)
                      """;
 

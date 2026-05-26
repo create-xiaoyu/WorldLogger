@@ -23,9 +23,9 @@ public class WriteTable {
                     INSERT INTO PLAYER_LOGIN_INFO(
                         player_uuid,
                         player_name,
-                        player_login_pos,
-                        player_login_world,
-                        player_IP
+                        IP,
+                        pos,
+                        world
                     ) VALUES (?, ?, ?, ?, ?)
                     """;
         } else {
@@ -33,8 +33,8 @@ public class WriteTable {
                      INSERT INTO PLAYER_LOGOUT_INFO(
                          player_uuid,
                          player_name,
-                         player_logout_pos,
-                         player_logout_world
+                         pos,
+                         world
                      ) VALUES (?, ?, ?, ?)
                      """;
         }

@@ -25,12 +25,12 @@ public class DataBase {
                     """
                         CREATE TABLE IF NOT EXISTS PLAYER_LOGIN_INFO(
                             data_id INT AUTO_INCREMENT PRIMARY KEY,
+                            time DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
                             player_uuid VARCHAR(36) NOT NULL,
                             player_name VARCHAR(16) NOT NULL,
-                            player_IP VARCHAR(32),
-                            player_login_time DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-                            player_login_pos VARCHAR(64),
-                            player_login_world VARCHAR(64)
+                            IP VARCHAR(32),
+                            pos VARCHAR(64),
+                            world VARCHAR(64)
                         )
                         """
             );
@@ -38,11 +38,11 @@ public class DataBase {
                     """
                         CREATE TABLE IF NOT EXISTS PLAYER_LOGOUT_INFO(
                             data_id INT AUTO_INCREMENT PRIMARY KEY,
+                            time DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
                             player_uuid VARCHAR(36) NOT NULL,
                             player_name VARCHAR(16) NOT NULL,
-                            player_logout_time DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-                            player_logout_pos VARCHAR(64),
-                            player_logout_world VARCHAR(64)
+                            pos VARCHAR(64),
+                            world VARCHAR(64)
                         )
                         """
             );
@@ -50,17 +50,17 @@ public class DataBase {
                     """
                         CREATE TABLE IF NOT EXISTS PLAYER_DEATH_INFO(
                             data_id INT AUTO_INCREMENT PRIMARY KEY,
+                            time DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
                             player_uuid VARCHAR(36) NOT NULL,
                             player_name VARCHAR(16) NOT NULL,
-                            player_death_type VARCHAR(64) NOT NULL,
-                            player_death_time DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-                            player_death_pos VARCHAR(64),
-                            player_death_world VARCHAR(64),
-                            player_death_source_name VARCHAR(255),
-                            player_death_source_pos VARCHAR(64),
-                            player_death_source_world VARCHAR(64),
-                            player_death_source_item VARCHAR(64),
-                            player_death_message VARCHAR(64)
+                            death_type VARCHAR(64) NOT NULL,
+                            pos VARCHAR(64),
+                            world VARCHAR(64),
+                            source_name VARCHAR(255),
+                            source_pos VARCHAR(64),
+                            source_world VARCHAR(64),
+                            source_weapon_item VARCHAR(64),
+                            death_message VARCHAR(64)
                         )
                         """
             );
@@ -68,13 +68,13 @@ public class DataBase {
                     """
                         CREATE TABLE IF NOT EXISTS PLAYER_LOST_ITEM(
                             data_id INT AUTO_INCREMENT PRIMARY KEY,
+                            time DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
                             player_uuid VARCHAR(36) NOT NULL,
                             player_name VARCHAR(16) NOT NULL,
-                            player_lost_type VARCHAR(64) NOT NULL,
-                            player_lost_item_time DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-                            player_lost_pos VARCHAR(64),
-                            player_lost_world VARCHAR(64),
-                            player_lost_item TEXT
+                            lost_type VARCHAR(64) NOT NULL,
+                            pos VARCHAR(64),
+                            world VARCHAR(64),
+                            lost_item TEXT
                         )
                         """
             );
@@ -82,14 +82,14 @@ public class DataBase {
                     """
                         CREATE TABLE IF NOT EXISTS PLAYER_XP_INFO(
                             data_id INT AUTO_INCREMENT PRIMARY KEY,
+                            time DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
                             player_uuid VARCHAR(36) NOT NULL,
                             player_name VARCHAR(16) NOT NULL,
-                            player_xp_change_type VARCHAR(64)NOT NULL,
-                            player_xp_change_time DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-                            player_xp_change_count INT,
-                            player_xp_change_pos VARCHAR(64),
-                            player_xp_change_world VARCHAR(64),
-                            player_xp_count INT
+                            xp_change_type VARCHAR(64)NOT NULL,
+                            xp_change_count INT,
+                            pos VARCHAR(64),
+                            world VARCHAR(64),
+                            xp_count INT
                         )
                         """
             );
@@ -97,11 +97,11 @@ public class DataBase {
                     """
                         CREATE TABLE IF NOT EXISTS EXECUTE_COMMAND_INFO(
                             data_id INT AUTO_INCREMENT PRIMARY KEY,
-                            execute_time DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-                            execute_source VARCHAR(255) NOT NULL,
-                            execute_pos VARCHAR(64),
-                            execute_world VARCHAR(64),
-                            execute_command TEXT
+                            time DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                            source VARCHAR(255) NOT NULL,
+                            pos VARCHAR(64),
+                            world VARCHAR(64),
+                            command TEXT
                         )
                         """
             );

@@ -44,14 +44,14 @@ public class PlayerDeathInfo {
                      INSERT INTO PLAYER_DEATH_INFO(
                          player_uuid,
                          player_name,
-                         player_death_type,
-                         player_death_pos,
-                         player_death_world,
-                         player_death_source_name,
-                         player_death_source_pos,
-                         player_death_source_world,
-                         player_death_source_item,
-                         player_death_message
+                         death_type,
+                         pos,
+                         world,
+                         source_name,
+                         source_pos,
+                         source_world,
+                         source_weapon_item,
+                         death_message
                      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                      """;
 
@@ -128,10 +128,10 @@ public class PlayerDeathInfo {
                  INSERT INTO PLAYER_LOST_ITEM(
                      player_uuid,
                      player_name,
-                     player_lost_type,
-                     player_lost_pos,
-                     player_lost_world,
-                     player_lost_item
+                     lost_type,
+                     pos,
+                     world,
+                     lost_item
                  ) VALUES (?, ?, ?, ?, ?, ?, ?)
                  """;
 
@@ -169,11 +169,11 @@ public class PlayerDeathInfo {
                      INSERT INTO PLAYER_XP_INFO(
                          player_uuid,
                          player_name,
-                         player_xp_change_type,
-                         player_xp_change_count,
-                         player_xp_change_pos,
-                         player_xp_change_world,
-                         player_xp_count
+                         xp_change_type,
+                         xp_change_count,
+                         pos,
+                         world,
+                         xp_count
                      ) VALUES (?, ?, ?, ?, ?, ?, ?)
                      """;
 
