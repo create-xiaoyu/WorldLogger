@@ -6,7 +6,7 @@ import org.slf4j.Logger;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 
-public class Hash {
+public class HashUtils {
     private static final Logger LOGGER = LogUtils.getLogger();
 
     public static String sha1(String send) {

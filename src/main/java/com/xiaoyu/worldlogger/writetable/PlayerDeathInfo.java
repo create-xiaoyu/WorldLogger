@@ -6,15 +6,12 @@ import com.xiaoyu.worldlogger.data.PlayerDeathData;
 import com.xiaoyu.worldlogger.data.PlayerSessionData;
 import com.xiaoyu.worldlogger.mysql.InitMySQL;
 import com.xiaoyu.worldlogger.mysql.MySQLExecutorService;
-import com.xiaoyu.worldlogger.utils.Hash;
-import net.minecraft.core.component.DataComponents;
-import net.minecraft.core.registries.BuiltInRegistries;
-import net.minecraft.nbt.CompoundTag;
+import com.xiaoyu.worldlogger.utils.HashUtils;
+import com.xiaoyu.worldlogger.utils.ItemUtils;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.item.component.CustomData;
 import net.minecraft.world.level.Level;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.neoforge.event.entity.living.LivingDeathEvent;
@@ -46,7 +43,7 @@ public class PlayerDeathInfo {
         String deathType = source.typeHolder().getRegisteredName();
 
         String seed = playerData.uuid + playerData.name + timeStamp;
-        String death_id = Hash.sha1(seed);
+        String death_id = HashUtils.sha1(seed);
 
         String SQL = """
                      INSERT INTO PLAYER_DEATH_INFO(
@@ -99,43 +96,16 @@ public class PlayerDeathInfo {
         List<Map<String, Object>> lostItems = new ArrayList<>();
 
         for (ItemEntity drop : event.getDrops()) {
-            Map<String, Object> item = new HashMap<>();
             ItemStack stack = drop.getItem();
 
-            CustomData customData = stack.get(DataComponents.CUSTOM_DATA);
-
-            item.put("item", BuiltInRegistries.ITEM.getKey(stack.getItem()).toString());
-            item.put("count", stack.getCount());
-
-            if (customData != null) {
-                CompoundTag tag = customData.copyTag();
-
-                item.put("custom_data", tag.toString());
-            } else {
-                item.put("tag", null);
-            }
-
-            Map<String, Map<String, Object>> enchantments = new HashMap<>();
-
-            stack.getTagEnchantments().entrySet().forEach(entry -> {
-                String regId = entry.getKey().getRegisteredName();
-
-                Map<String, Object> enchantmentInfo = new HashMap<>();
-                enchantmentInfo.put("name", entry.getKey().value().description().getString());
-                enchantmentInfo.put("level", entry.getIntValue());
-
-                enchantments.put(regId, enchantmentInfo);
-                item.put("enchantments", enchantments);
-            });
-
-            lostItems.add(item);
+            lostItems.add(ItemUtils.getItemData(stack));
         }
 
         Gson gson = new Gson();
         String items = gson.toJson(lostItems);
 
         String seed = data.uuid + data.name + timeStamp;
-        String death_id = Hash.sha1(seed);
+        String death_id = HashUtils.sha1(seed);
 
         String SQL = """
                  INSERT INTO PLAYER_LOST_ITEM(
@@ -181,7 +151,7 @@ public class PlayerDeathInfo {
         int XPCount = player.totalExperience;
 
         String seed = data.uuid + data.name + timeStamp;
-        String death_id = Hash.sha1(seed);
+        String death_id = HashUtils.sha1(seed);
 
         String SQL = """
                      INSERT INTO PLAYER_XP_INFO(
