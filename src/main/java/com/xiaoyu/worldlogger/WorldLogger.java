@@ -33,6 +33,7 @@ public class WorldLogger {
             NeoForge.EVENT_BUS.register(PlayerDeathInfo.class);
             NeoForge.EVENT_BUS.register(ExecuteCommandInfo.class);
             NeoForge.EVENT_BUS.register(ServerChatInfo.class);
+            NeoForge.EVENT_BUS.register(PlayerLostItem.class);
         }
 
         container.registerConfig(ModConfig.Type.COMMON, Config.SPEC);
