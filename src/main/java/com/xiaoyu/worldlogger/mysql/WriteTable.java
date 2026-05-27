@@ -23,9 +23,9 @@ public class WriteTable {
                     INSERT INTO PLAYER_LOGIN_INFO(
                         player_uuid,
                         player_name,
-                        IP,
                         pos,
-                        world
+                        world,
+                        IP
                     ) VALUES (?, ?, ?, ?, ?)
                     """;
         } else {

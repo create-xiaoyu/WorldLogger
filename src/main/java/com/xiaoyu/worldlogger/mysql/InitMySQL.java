@@ -35,6 +35,7 @@ public class InitMySQL {
             DataSource = new HikariDataSource(hikariConfig);
 
             LOGGER.info("Hikari DataSource initialized successfully.");
+
         } catch (Exception e) {
             LOGGER.error("Hikari DataSource initialization failed.", e);
         }
@@ -42,7 +43,7 @@ public class InitMySQL {
 
     public static Connection getMySQLConnection() throws SQLException {
         if (DataSource == null) {
-            throw new IllegalStateException("HikariCP not initialized");
+            throw new SQLException("HikariCP not initialized");
         }
         return DataSource.getConnection();
     }

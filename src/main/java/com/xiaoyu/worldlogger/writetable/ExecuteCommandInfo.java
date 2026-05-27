@@ -5,6 +5,7 @@ import com.mojang.brigadier.context.CommandContextBuilder;
 import com.mojang.logging.LogUtils;
 import com.xiaoyu.worldlogger.data.PlayerSessionData;
 import com.xiaoyu.worldlogger.mysql.InitMySQL;
+import com.xiaoyu.worldlogger.mysql.MySQLExecutorService;
 import com.xiaoyu.worldlogger.utils.StringData;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.server.MinecraftServer;
@@ -67,19 +68,25 @@ public class ExecuteCommandInfo {
                      ) VALUES (?, ?, ?, ?)
                      """;
 
-        try (Connection mysqlConnection = InitMySQL.getMySQLConnection()) {
-            try (PreparedStatement statement = mysqlConnection.prepareStatement(SQL)) {
-                statement.setString(1, executeSource);
-                statement.setString(2, executePos);
-                statement.setString(3, executeWorld);
-                statement.setString(4, executeCommand);
+        final String finalExecuteSource = executeSource;
+        final String finalExecutePos = executePos;
+        final String finalExecuteWorld = executeWorld;
 
-                statement.executeUpdate();
+        MySQLExecutorService.getExecutor().execute(() -> {
+            try (Connection mysqlConnection = InitMySQL.getMySQLConnection()) {
+                try (PreparedStatement statement = mysqlConnection.prepareStatement(SQL)) {
+                    statement.setString(1, finalExecuteSource);
+                    statement.setString(2, finalExecutePos);
+                    statement.setString(3, finalExecuteWorld);
+                    statement.setString(4, executeCommand);
+
+                    statement.executeUpdate();
+                } catch (SQLException e) {
+                    LOGGER.error("Failed to execute SQL statement {}", SQL, e);
+                }
             } catch (SQLException e) {
-                LOGGER.error("Failed to execute SQL statement {}", SQL, e);
+                LOGGER.error("Failed to connect to MySQL server!", e);
             }
-        } catch (SQLException e) {
-            LOGGER.error("Failed to connect to MySQL server!", e);
-        }
+        });
     }
 }

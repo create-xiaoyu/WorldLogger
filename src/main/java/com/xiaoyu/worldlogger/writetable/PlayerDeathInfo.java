@@ -132,7 +132,7 @@ public class PlayerDeathInfo {
                      pos,
                      world,
                      lost_item
-                 ) VALUES (?, ?, ?, ?, ?, ?, ?)
+                 ) VALUES (?, ?, ?, ?, ?, ?)
                  """;
 
         MySQLExecutorService.getExecutor().execute(() -> {

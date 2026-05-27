@@ -1,12 +1,9 @@
 package com.xiaoyu.worldlogger;
 
-import com.xiaoyu.worldlogger.writetable.ExecuteCommandInfo;
-import com.xiaoyu.worldlogger.writetable.PlayerDeathInfo;
-import com.xiaoyu.worldlogger.writetable.PlayerInfo;
+import com.xiaoyu.worldlogger.writetable.*;
 import com.xiaoyu.worldlogger.mysql.DataBase;
 import com.xiaoyu.worldlogger.mysql.InitMySQL;
 import com.xiaoyu.worldlogger.mysql.MySQLExecutorService;
-import com.xiaoyu.worldlogger.writetable.ServerChatInfo;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.fml.ModContainer;
 import net.neoforged.fml.config.ModConfig;

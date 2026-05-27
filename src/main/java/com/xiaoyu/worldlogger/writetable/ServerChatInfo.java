@@ -3,6 +3,7 @@ package com.xiaoyu.worldlogger.writetable;
 import com.mojang.logging.LogUtils;
 import com.xiaoyu.worldlogger.data.PlayerSessionData;
 import com.xiaoyu.worldlogger.mysql.InitMySQL;
+import com.xiaoyu.worldlogger.mysql.MySQLExecutorService;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.level.Level;
 import net.neoforged.bus.api.SubscribeEvent;
@@ -23,7 +24,7 @@ public class ServerChatInfo {
 
         PlayerSessionData data = new PlayerSessionData(player, level);
         String rawMessage = event.getRawText();
-        String componentMessage = event.getMessage().getString();
+        String componentMessage = event.getMessage().toString();
 
         String SQL = """
                      INSERT INTO SERVER_CHAT_INFO(
@@ -36,21 +37,23 @@ public class ServerChatInfo {
                      ) VALUES (?, ?, ?, ?, ?, ?)
                      """;
 
-        try (Connection mysqlConnection = InitMySQL.getMySQLConnection()) {
-            try (PreparedStatement statement = mysqlConnection.prepareStatement(SQL)) {
-                statement.setString(1, data.uuid);
-                statement.setString(2, data.name);
-                statement.setString(3, data.pos);
-                statement.setString(4, data.world);
-                statement.setString(5, rawMessage);
-                statement.setString(6, componentMessage);
+        MySQLExecutorService.getExecutor().execute(() -> {
+            try (Connection mysqlConnection = InitMySQL.getMySQLConnection()) {
+                try (PreparedStatement statement = mysqlConnection.prepareStatement(SQL)) {
+                    statement.setString(1, data.uuid);
+                    statement.setString(2, data.name);
+                    statement.setString(3, data.pos);
+                    statement.setString(4, data.world);
+                    statement.setString(5, rawMessage);
+                    statement.setString(6, componentMessage);
 
-                statement.executeUpdate();
+                    statement.executeUpdate();
+                } catch (SQLException e) {
+                    LOGGER.error("Failed to execute SQL statement {}", SQL, e);
+                }
             } catch (SQLException e) {
-                LOGGER.error("Failed to execute SQL statement {}", SQL, e);
+                LOGGER.error("Failed to connect to MySQL server!", e);
             }
-        } catch (SQLException e) {
-            LOGGER.error("Failed to connect to MySQL server!", e);
-        }
+        });
     }
 }
