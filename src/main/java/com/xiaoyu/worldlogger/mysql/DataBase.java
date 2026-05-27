@@ -105,6 +105,20 @@ public class DataBase {
                         )
                         """
             );
+            statement.execute(
+                    """
+                        CREATE TABLE IF NOT EXISTS SERVER_CHAT_INFO(
+                            data_id INT AUTO_INCREMENT PRIMARY KEY,
+                            time DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                            player_uuid VARCHAR(36) NOT NULL,
+                            player_name VARCHAR(16) NOT NULL,
+                            pos VARCHAR(64),
+                            world VARCHAR(64),
+                            raw_message TEXT,
+                            component_message TEXT
+                        )
+                        """
+            );
         } catch (SQLException e) {
             LOGGER.error("Error while initializing DataBase!", e);
         }

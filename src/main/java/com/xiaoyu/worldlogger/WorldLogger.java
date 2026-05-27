@@ -6,6 +6,7 @@ import com.xiaoyu.worldlogger.writetable.PlayerInfo;
 import com.xiaoyu.worldlogger.mysql.DataBase;
 import com.xiaoyu.worldlogger.mysql.InitMySQL;
 import com.xiaoyu.worldlogger.mysql.MySQLExecutorService;
+import com.xiaoyu.worldlogger.writetable.ServerChatInfo;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.fml.ModContainer;
 import net.neoforged.fml.config.ModConfig;
@@ -34,6 +35,7 @@ public class WorldLogger {
             NeoForge.EVENT_BUS.register(PlayerInfo.class);
             NeoForge.EVENT_BUS.register(PlayerDeathInfo.class);
             NeoForge.EVENT_BUS.register(ExecuteCommandInfo.class);
+            NeoForge.EVENT_BUS.register(ServerChatInfo.class);
         }
 
         container.registerConfig(ModConfig.Type.COMMON, Config.SPEC);
