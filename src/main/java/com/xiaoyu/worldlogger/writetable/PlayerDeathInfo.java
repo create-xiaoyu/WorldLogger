@@ -6,6 +6,7 @@ import com.xiaoyu.worldlogger.data.PlayerDeathData;
 import com.xiaoyu.worldlogger.data.PlayerSessionData;
 import com.xiaoyu.worldlogger.mysql.InitMySQL;
 import com.xiaoyu.worldlogger.mysql.MySQLExecutorService;
+import com.xiaoyu.worldlogger.utils.Hash;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.nbt.CompoundTag;
@@ -28,10 +29,14 @@ import java.util.*;
 
 public class PlayerDeathInfo {
     private static final Logger LOGGER = LogUtils.getLogger();
+    private static long timeStamp;
 
     @SubscribeEvent
     public static void PLAYER_DEATH_INFO(LivingDeathEvent event) {
         if (!(event.getEntity() instanceof ServerPlayer player)) return;
+
+        timeStamp = System.currentTimeMillis();
+
         Level level = player.level();
         DamageSource source = event.getSource();
 
@@ -40,8 +45,12 @@ public class PlayerDeathInfo {
 
         String deathType = source.typeHolder().getRegisteredName();
 
+        String seed = playerData.uuid + playerData.name + timeStamp;
+        String death_id = Hash.sha1(seed);
+
         String SQL = """
                      INSERT INTO PLAYER_DEATH_INFO(
+                         death_id,
                          player_uuid,
                          player_name,
                          death_type,
@@ -52,22 +61,23 @@ public class PlayerDeathInfo {
                          source_world,
                          source_weapon_item,
                          death_message
-                     ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                     ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                      """;
 
         MySQLExecutorService.getExecutor().execute(() -> {
             try (Connection mysqlConnection = InitMySQL.getMySQLConnection()) {
                 try (PreparedStatement statement = mysqlConnection.prepareStatement(SQL)) {
-                    statement.setString(1, playerData.uuid);
-                    statement.setString(2, playerData.name);
-                    statement.setString(3, deathType);
-                    statement.setString(4, playerData.pos);
-                    statement.setString(5, playerData.world);
-                    statement.setString(6, deathData.sourceName);
-                    statement.setString(7, deathData.sourcePos);
-                    statement.setString(8, deathData.sourceWorld);
-                    statement.setString(9, deathData.sourceItem);
-                    statement.setString(10, deathData.deathMessage);
+                    statement.setString(1, death_id);
+                    statement.setString(2, playerData.uuid);
+                    statement.setString(3, playerData.name);
+                    statement.setString(4, deathType);
+                    statement.setString(5, playerData.pos);
+                    statement.setString(6, playerData.world);
+                    statement.setString(7, deathData.sourceName);
+                    statement.setString(8, deathData.sourcePos);
+                    statement.setString(9, deathData.sourceWorld);
+                    statement.setString(10, deathData.sourceItem);
+                    statement.setString(11, deathData.deathMessage);
 
                     statement.executeUpdate();
                 } catch (SQLException e) {
@@ -124,26 +134,31 @@ public class PlayerDeathInfo {
         Gson gson = new Gson();
         String items = gson.toJson(lostItems);
 
+        String seed = data.uuid + data.name + timeStamp;
+        String death_id = Hash.sha1(seed);
+
         String SQL = """
                  INSERT INTO PLAYER_LOST_ITEM(
+                     death_id,
                      player_uuid,
                      player_name,
                      lost_type,
                      pos,
                      world,
                      lost_item
-                 ) VALUES (?, ?, ?, ?, ?, ?)
+                 ) VALUES (?, ?, ?, ?, ?, ?, ?)
                  """;
 
         MySQLExecutorService.getExecutor().execute(() -> {
             try (Connection mysqlConnection = InitMySQL.getMySQLConnection()) {
                 try (PreparedStatement statement = mysqlConnection.prepareStatement(SQL)) {
-                    statement.setString(1, data.uuid);
-                    statement.setString(2, data.name);
-                    statement.setString(3, "Death");
-                    statement.setString(4, data.pos);
-                    statement.setString(5, data.world);
-                    statement.setString(6, items);
+                    statement.setString(1, death_id);
+                    statement.setString(2, data.uuid);
+                    statement.setString(3, data.name);
+                    statement.setString(4, "Death");
+                    statement.setString(5, data.pos);
+                    statement.setString(6, data.world);
+                    statement.setString(7, items);
 
                     statement.executeUpdate();
                 } catch (SQLException e) {
@@ -165,8 +180,12 @@ public class PlayerDeathInfo {
         int XP = event.getDroppedExperience();
         int XPCount = player.totalExperience;
 
+        String seed = data.uuid + data.name + timeStamp;
+        String death_id = Hash.sha1(seed);
+
         String SQL = """
                      INSERT INTO PLAYER_XP_INFO(
+                         death_id,
                          player_uuid,
                          player_name,
                          xp_change_type,
@@ -174,19 +193,20 @@ public class PlayerDeathInfo {
                          pos,
                          world,
                          xp_count
-                     ) VALUES (?, ?, ?, ?, ?, ?, ?)
+                     ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
                      """;
 
         MySQLExecutorService.getExecutor().execute(() -> {
            try (Connection mysqlConnection = InitMySQL.getMySQLConnection()) {
                try (PreparedStatement statement = mysqlConnection.prepareStatement(SQL)) {
-                   statement.setString(1, data.uuid);
-                   statement.setString(2, data.name);
-                   statement.setString(3, "Death");
-                   statement.setInt(4, XP);
-                   statement.setString(5, data.pos);
-                   statement.setString(6, data.world);
-                   statement.setInt(7, XPCount);
+                   statement.setString(1, death_id);
+                   statement.setString(2, data.uuid);
+                   statement.setString(3, data.name);
+                   statement.setString(4, "Death");
+                   statement.setInt(5, XP);
+                   statement.setString(6, data.pos);
+                   statement.setString(7, data.world);
+                   statement.setInt(8, XPCount);
 
                    statement.executeUpdate();
                } catch (SQLException e) {

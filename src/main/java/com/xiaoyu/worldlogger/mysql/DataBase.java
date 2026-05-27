@@ -50,6 +50,7 @@ public class DataBase {
                     """
                         CREATE TABLE IF NOT EXISTS PLAYER_DEATH_INFO(
                             data_id INT AUTO_INCREMENT PRIMARY KEY,
+                            death_id VARCHAR(160),
                             time DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
                             player_uuid VARCHAR(36) NOT NULL,
                             player_name VARCHAR(16) NOT NULL,
@@ -68,6 +69,7 @@ public class DataBase {
                     """
                         CREATE TABLE IF NOT EXISTS PLAYER_LOST_ITEM(
                             data_id INT AUTO_INCREMENT PRIMARY KEY,
+                            death_id VARCHAR(160),
                             time DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
                             player_uuid VARCHAR(36) NOT NULL,
                             player_name VARCHAR(16) NOT NULL,
@@ -82,6 +84,7 @@ public class DataBase {
                     """
                         CREATE TABLE IF NOT EXISTS PLAYER_XP_INFO(
                             data_id INT AUTO_INCREMENT PRIMARY KEY,
+                            death_id VARCHAR(160),
                             time DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
                             player_uuid VARCHAR(36) NOT NULL,
                             player_name VARCHAR(16) NOT NULL,
