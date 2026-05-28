@@ -49,6 +49,8 @@ public class PlayerLostItem {
                     statement.setString(4, data.pos);
                     statement.setString(5, data.world);
                     statement.setString(6, lostItem);
+
+                    statement.executeUpdate();
                 } catch (SQLException e) {
                     LOGGER.error("Failed to execute SQL statement {}", SQL, e);
                 }

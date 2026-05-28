@@ -88,11 +88,12 @@ public class DataBase {
                             time DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
                             player_uuid VARCHAR(36) NOT NULL,
                             player_name VARCHAR(16) NOT NULL,
-                            xp_change_type VARCHAR(64)NOT NULL,
-                            xp_change_count INT,
+                            xp_change_type VARCHAR(64) NOT NULL,
+                            xp_change_source VARCHAR(64) NOT NULL,
+                            xp_change_count BIGINT,
                             pos VARCHAR(64),
                             world VARCHAR(64),
-                            xp_count INT
+                            xp_count BIGINT
                         )
                         """
             );

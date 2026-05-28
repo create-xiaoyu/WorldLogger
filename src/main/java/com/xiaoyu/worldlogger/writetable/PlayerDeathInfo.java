@@ -16,7 +16,7 @@ import net.minecraft.world.level.Level;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.neoforge.event.entity.living.LivingDeathEvent;
 import net.neoforged.neoforge.event.entity.living.LivingDropsEvent;
-import net.neoforged.neoforge.event.entity.living.LivingExperienceDropEvent;
+import net.neoforged.neoforge.event.entity.player.PlayerXpEvent;
 import org.slf4j.Logger;
 
 import java.sql.Connection;
@@ -141,13 +141,13 @@ public class PlayerDeathInfo {
     }
 
     @SubscribeEvent
-    public static void PLAYER_XP_INFO(LivingExperienceDropEvent event) {
+    public static void PLAYER_XP_INFO(PlayerXpEvent.XpChange event) {
         if (!(event.getEntity() instanceof ServerPlayer player)) return;
         Level level = player.level();
 
         PlayerSessionData data = new PlayerSessionData(player, level);
 
-        int XP = event.getDroppedExperience();
+        int XP = event.getAmount();
         int XPCount = player.totalExperience;
 
         String seed = data.uuid + data.name + timeStamp;
@@ -159,11 +159,12 @@ public class PlayerDeathInfo {
                          player_uuid,
                          player_name,
                          xp_change_type,
+                         xp_change_source,
                          xp_change_count,
                          pos,
                          world,
                          xp_count
-                     ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+                     ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
                      """;
 
         MySQLExecutorService.getExecutor().execute(() -> {
@@ -172,11 +173,12 @@ public class PlayerDeathInfo {
                    statement.setString(1, death_id);
                    statement.setString(2, data.uuid);
                    statement.setString(3, data.name);
-                   statement.setString(4, "Death");
-                   statement.setInt(5, XP);
-                   statement.setString(6, data.pos);
-                   statement.setString(7, data.world);
-                   statement.setInt(8, XPCount);
+                   statement.setString(4, "reduce");
+                   statement.setString(5, "Death");
+                   statement.setInt(6, XP);
+                   statement.setString(7, data.pos);
+                   statement.setString(8, data.world);
+                   statement.setInt(9, XPCount);
 
                    statement.executeUpdate();
                } catch (SQLException e) {

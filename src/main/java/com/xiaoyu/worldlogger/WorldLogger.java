@@ -1,5 +1,6 @@
 package com.xiaoyu.worldlogger;
 
+import com.xiaoyu.worldlogger.event.PlayerInteractEvent.RightClickBlock;
 import com.xiaoyu.worldlogger.writetable.*;
 import com.xiaoyu.worldlogger.mysql.DataBase;
 import com.xiaoyu.worldlogger.mysql.InitMySQL;
@@ -34,6 +35,8 @@ public class WorldLogger {
             NeoForge.EVENT_BUS.register(ExecuteCommandInfo.class);
             NeoForge.EVENT_BUS.register(ServerChatInfo.class);
             NeoForge.EVENT_BUS.register(PlayerLostItem.class);
+            NeoForge.EVENT_BUS.register(RightClickBlock.class);
+            NeoForge.EVENT_BUS.register(PlayerXPInfo.class);
         }
 
         container.registerConfig(ModConfig.Type.COMMON, Config.SPEC);
