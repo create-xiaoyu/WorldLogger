@@ -20,23 +20,23 @@ public class WriteTable {
 
         if (login) {
             SQL = """
-                    INSERT INTO PLAYER_LOGIN_INFO(
-                        player_uuid,
-                        player_name,
-                        pos,
-                        world,
-                        IP
-                    ) VALUES (?, ?, ?, ?, ?)
-                    """;
+                  INSERT INTO PLAYER_LOGIN_INFO(
+                      player_uuid,
+                      player_name,
+                      pos,
+                      world,
+                      IP
+                  ) VALUES (?, ?, ?, ?, ?)
+                  """;
         } else {
             SQL = """
-                     INSERT INTO PLAYER_LOGOUT_INFO(
-                         player_uuid,
-                         player_name,
-                         pos,
-                         world
-                     ) VALUES (?, ?, ?, ?)
-                     """;
+                  INSERT INTO PLAYER_LOGOUT_INFO(
+                      player_uuid,
+                      player_name,
+                      pos,
+                      world
+                  ) VALUES (?, ?, ?, ?)
+                  """;
         }
 
         MySQLExecutorService.getExecutor().execute(() -> {
