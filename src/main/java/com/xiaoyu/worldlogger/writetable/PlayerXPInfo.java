@@ -9,6 +9,8 @@ import com.xiaoyu.worldlogger.utils.HashUtils;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.state.BlockState;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.neoforge.event.entity.player.PlayerXpEvent;
 import org.slf4j.Logger;
@@ -16,7 +18,6 @@ import org.slf4j.Logger;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
-import java.util.Objects;
 import java.util.concurrent.atomic.AtomicReference;
 
 public class PlayerXPInfo {
@@ -44,38 +45,31 @@ public class PlayerXPInfo {
 
         AtomicReference<String> changeSource = new AtomicReference<>("normal");
 
+        BlockState block = RightClickBlock.getRightClickBlocks(HashUtils.sha1(data.uuid + data.name));
         if (changeType.equals("added")) {
-            RightClickBlock.getRightClickBlocks().forEach((playerHash, block) -> {
-                if (Objects.equals(HashUtils.sha1(data.uuid + data.name), playerHash)) {
-                    switch (BuiltInRegistries.BLOCK.getKey(block).toString()) {
-                        case "minecraft:grindstone":
-                            changeSource.set("Use Grindstone");
-                            break;
-                        case "minecraft:furnace":
-                        case "minecraft:blast_furnace":
-                        case "minecraft:smoker":
-                            changeSource.set("Smelting Item");
-                            break;
-                    }
-                }
-            });
+            switch (BuiltInRegistries.BLOCK.getKey(block.getBlock()).toString()) {
+                case "minecraft:grindstone":
+                    changeSource.set("Use Grindstone");
+                    break;
+                case "minecraft:furnace":
+                case "minecraft:blast_furnace":
+                case "minecraft:smoker":
+                    changeSource.set("Smelting Item");
+                    break;
+            }
         } else {
-            RightClickBlock.getRightClickBlocks().forEach((playerHash, block) -> {
-                if (Objects.equals(HashUtils.sha1(data.uuid + data.name), playerHash)) {
-                    switch (BuiltInRegistries.BLOCK.getKey(block).toString()) {
-                        case "minecraft:anvil":
-                        case "minecraft:chipped_anvil":
-                        case "minecraft:damaged_anvil":
-                            changeSource.set("Use Anvil");
-                            break;
-                        case "minecraft:enchanting_table":
-                            changeSource.set("Use Enchanting Table");
-                            break;
-                        default:
-                            changeSource.set("Use Block");
-                    }
-                }
-            });
+            switch (BuiltInRegistries.BLOCK.getKey(block.getBlock()).toString()) {
+                case "minecraft:anvil":
+                case "minecraft:chipped_anvil":
+                case "minecraft:damaged_anvil":
+                    changeSource.set("Use Anvil");
+                    break;
+                case "minecraft:enchanting_table":
+                    changeSource.set("Use Enchanting Table");
+                    break;
+                default:
+                    changeSource.set("Use Block");
+            }
         }
 
         String SQL = """

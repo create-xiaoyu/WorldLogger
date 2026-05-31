@@ -7,7 +7,7 @@ import com.xiaoyu.worldlogger.data.PlayerSessionData;
 import com.xiaoyu.worldlogger.mysql.InitMySQL;
 import com.xiaoyu.worldlogger.mysql.MySQLExecutorService;
 import com.xiaoyu.worldlogger.utils.HashUtils;
-import com.xiaoyu.worldlogger.utils.ItemUtils;
+import com.xiaoyu.worldlogger.utils.ItemDataUtils;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.item.ItemEntity;
@@ -26,13 +26,11 @@ import java.util.*;
 
 public class PlayerDeathInfo {
     private static final Logger LOGGER = LogUtils.getLogger();
-    private static long timeStamp;
+    private static final Map<String, Long> timeStamp = new HashMap<>();
 
     @SubscribeEvent
     public static void PLAYER_DEATH_INFO(LivingDeathEvent event) {
         if (!(event.getEntity() instanceof ServerPlayer player)) return;
-
-        timeStamp = System.currentTimeMillis();
 
         Level level = player.level();
         DamageSource source = event.getSource();
@@ -42,7 +40,9 @@ public class PlayerDeathInfo {
 
         String deathType = source.typeHolder().getRegisteredName();
 
-        String seed = playerData.uuid + playerData.name + timeStamp;
+        timeStamp.put(HashUtils.sha1(playerData.uuid + playerData.name), System.currentTimeMillis());
+
+        String seed = playerData.uuid + playerData.name + timeStamp.get(HashUtils.sha1(playerData.uuid + playerData.name));
         String death_id = HashUtils.sha1(seed);
 
         String SQL = """
@@ -98,13 +98,13 @@ public class PlayerDeathInfo {
         for (ItemEntity drop : event.getDrops()) {
             ItemStack stack = drop.getItem();
 
-            lostItems.add(ItemUtils.getItemData(stack));
+            lostItems.add(ItemDataUtils.getItemData(stack));
         }
 
         Gson gson = new Gson();
         String items = gson.toJson(lostItems);
 
-        String seed = data.uuid + data.name + timeStamp;
+        String seed = data.uuid + data.name + timeStamp.get(HashUtils.sha1(data.uuid + data.name));
         String death_id = HashUtils.sha1(seed);
 
         String SQL = """
@@ -150,7 +150,7 @@ public class PlayerDeathInfo {
         int XP = event.getAmount();
         int XPCount = player.totalExperience;
 
-        String seed = data.uuid + data.name + timeStamp;
+        String seed = data.uuid + data.name + timeStamp.get(HashUtils.sha1(data.uuid + data.name));
         String death_id = HashUtils.sha1(seed);
 
         String SQL = """

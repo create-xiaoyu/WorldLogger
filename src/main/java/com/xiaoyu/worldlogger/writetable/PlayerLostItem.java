@@ -5,7 +5,7 @@ import com.mojang.logging.LogUtils;
 import com.xiaoyu.worldlogger.data.PlayerSessionData;
 import com.xiaoyu.worldlogger.mysql.InitMySQL;
 import com.xiaoyu.worldlogger.mysql.MySQLExecutorService;
-import com.xiaoyu.worldlogger.utils.ItemUtils;
+import com.xiaoyu.worldlogger.utils.ItemDataUtils;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.level.Level;
 import net.neoforged.bus.api.SubscribeEvent;
@@ -38,7 +38,7 @@ public class PlayerLostItem {
                      """;
 
         Gson gson = new Gson();
-        String lostItem = gson.toJson(ItemUtils.getItemData(event.getEntity().getItem()));
+        String lostItem = gson.toJson(ItemDataUtils.getItemData(event.getEntity().getItem()));
 
         MySQLExecutorService.getExecutor().execute(() -> {
             try (Connection mysqlConnection = InitMySQL.getMySQLConnection()) {

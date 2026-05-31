@@ -130,11 +130,15 @@ public class DataBase {
                             time DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
                             player_uuid VARCHAR(36) NOT NULL,
                             player_name VARCHAR(16) NOT NULL,
-                            pos VARCHAR(64),
-                            world VARCHAR(64),
-                            container VARCHAR(64),
-                            type VARCHAR(64),
-                            modify TEXT
+                            player_pos VARCHAR(64),
+                            player_world VARCHAR(64),
+                            container_id VARCHAR(64),
+                            container_pos VARCHAR(64),
+                            container_world VARCHAR(64),
+                            slot_index INT,
+                            source_item TEXT,
+                            modify_item TEXT,
+                            modify_type VARCHAR(64)
                         )
                         """
             );
