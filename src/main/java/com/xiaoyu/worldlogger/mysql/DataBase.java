@@ -1,6 +1,7 @@
 package com.xiaoyu.worldlogger.mysql;
 
 import com.mojang.logging.LogUtils;
+import net.neoforged.neoforge.event.level.BlockEvent;
 import org.slf4j.Logger;
 
 import java.sql.Connection;
@@ -131,14 +132,27 @@ public class DataBase {
                             player_uuid VARCHAR(36) NOT NULL,
                             player_name VARCHAR(16) NOT NULL,
                             player_pos VARCHAR(64),
-                            player_world VARCHAR(64),
+                            world VARCHAR(64),
                             container_id VARCHAR(64),
                             container_pos VARCHAR(64),
-                            container_world VARCHAR(64),
                             slot_index INT,
                             source_item TEXT,
                             modify_item TEXT,
                             modify_type VARCHAR(64)
+                        )
+                        """
+            );
+            statement.execute(
+                    """
+                        CREATE TABLE IF NOT EXISTS ENTITY_PLACE_BLOCK(
+                            data_id INT AUTO_INCREMENT PRIMARY KEY,
+                            time DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                            entity_name VARCHAR(255) NOT NULL,
+                            entity_pos VARCHAR(64),
+                            world VARCHAR(64),
+                            block_id VARCHAR(64),
+                            block_nbt TEXT,
+                            block_pos VARCHAR(64)
                         )
                         """
             );

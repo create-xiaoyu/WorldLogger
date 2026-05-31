@@ -9,7 +9,6 @@ import com.xiaoyu.worldlogger.mysql.InitMySQL;
 import com.xiaoyu.worldlogger.mysql.MySQLExecutorService;
 import com.xiaoyu.worldlogger.utils.HashUtils;
 import com.xiaoyu.worldlogger.utils.ItemDataUtils;
-import com.xiaoyu.worldlogger.utils.StringData;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.server.level.ServerPlayer;
@@ -49,7 +48,6 @@ public class PlayerContainerInfo {
         int slotSize = container.slots.size() - 36;
         BlockState containerBlockID = RightClickBlock.getRightClickBlocks(playerHash);
         BlockPos containerBlockPos = RightClickBlock.getRightClickPos(playerHash);
-        String containerWorld = StringData.getLevelName(level);
 
         openedContainerData.put(playerHash ,ItemDataUtils.getContainerAllData(container, playerData, slotSize));
 
@@ -134,15 +132,14 @@ public class PlayerContainerInfo {
                                      player_uuid,
                                      player_name,
                                      player_pos,
-                                     player_world,
+                                     world,
                                      container_id,
                                      container_pos,
-                                     container_world,
                                      slot_index,
                                      source_item,
                                      modify_item,
                                      modify_type
-                                     ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                                     ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                                      """;
 
                         MySQLExecutorService.getExecutor().execute(() -> {
@@ -154,11 +151,10 @@ public class PlayerContainerInfo {
                                     statement.setString(4, playerData.world);
                                     statement.setString(5, BuiltInRegistries.BLOCK.getKey(containerBlockID.getBlock()).toString());
                                     statement.setString(6, containerBlockPos.toString());
-                                    statement.setString(7, containerWorld);
-                                    statement.setInt(8, i);
-                                    statement.setString(9, data.toString());
-                                    statement.setString(10, gson.toJson(ItemDataUtils.getItemData(itemStack)));
-                                    statement.setString(11, modifyType.get());
+                                    statement.setInt(7, i);
+                                    statement.setString(8, data.toString());
+                                    statement.setString(9, gson.toJson(ItemDataUtils.getItemData(itemStack)));
+                                    statement.setString(10, modifyType.get());
 
                                     statement.executeUpdate();
                                 } catch (SQLException e) {

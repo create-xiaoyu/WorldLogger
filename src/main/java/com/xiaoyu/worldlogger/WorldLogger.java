@@ -38,6 +38,7 @@ public class WorldLogger {
             NeoForge.EVENT_BUS.register(RightClickBlock.class);
             NeoForge.EVENT_BUS.register(PlayerXPInfo.class);
             NeoForge.EVENT_BUS.register(PlayerContainerInfo.class);
+            NeoForge.EVENT_BUS.register(EntityPlaceBlock.class);
         }
 
         container.registerConfig(ModConfig.Type.COMMON, Config.SPEC);
