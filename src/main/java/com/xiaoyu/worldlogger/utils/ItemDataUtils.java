@@ -41,7 +41,7 @@ public class ItemDataUtils {
         Map<String, Object> slotData = new HashMap<>();
         Map<String, Object> slotIndexData = new HashMap<>();
 
-        BlockState containerBlockID = RightClickBlock.getRightClickBlocks(HashUtils.sha1(playerData.uuid + playerData.name));
+        BlockState containerBlock = RightClickBlock.getRightClickBlocks(HashUtils.sha1(playerData.uuid + playerData.name));
 
         for (int i = 0; i < slotSize; i++) {
             Slot slot = container.slots.get(i);
@@ -55,7 +55,7 @@ public class ItemDataUtils {
         }
 
         slotData.put("slotData", slotIndexData);
-        containerData.put(BuiltInRegistries.BLOCK.getKey(containerBlockID.getBlock()).toString(), slotData);
+        containerData.put(BuiltInRegistries.BLOCK.getKey(containerBlock.getBlock()).toString(), slotData);
 
         return containerData;
     }

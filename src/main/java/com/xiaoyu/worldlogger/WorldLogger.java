@@ -39,6 +39,9 @@ public class WorldLogger {
             NeoForge.EVENT_BUS.register(PlayerXPInfo.class);
             NeoForge.EVENT_BUS.register(PlayerContainerInfo.class);
             NeoForge.EVENT_BUS.register(EntityPlaceBlock.class);
+            NeoForge.EVENT_BUS.register(PlayerBreakInfo.class);
+            NeoForge.EVENT_BUS.register(EntityBreakInfo.class);
+            NeoForge.EVENT_BUS.register(ExplosionBreakBlock.class);
         }
 
         container.registerConfig(ModConfig.Type.COMMON, Config.SPEC);

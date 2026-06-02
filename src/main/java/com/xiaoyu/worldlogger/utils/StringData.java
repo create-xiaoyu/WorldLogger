@@ -26,6 +26,10 @@ public class StringData {
         return String.format("[Player] UUID: %s, NAME: %s", data.uuid, data.name);
     }
 
+    public static String getEntityName(Player player) {
+        return String.format("[Player] UUID: %s, NAME: %s", player.getStringUUID(), player.getName().getString());
+    }
+
     public static String getPos(Entity entity) {
         return String.format("[X: %d, Y: %d, Z: %d]", entity.getBlockX(), entity.getBlockY(), entity.getBlockZ());
     }

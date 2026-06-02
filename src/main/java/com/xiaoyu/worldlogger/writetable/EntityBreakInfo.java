@@ -2,66 +2,54 @@ package com.xiaoyu.worldlogger.writetable;
 
 import com.mojang.logging.LogUtils;
 import com.xiaoyu.worldlogger.data.BlockInfoData;
-import com.xiaoyu.worldlogger.data.PlayerSessionData;
 import com.xiaoyu.worldlogger.mysql.InitMySQL;
 import com.xiaoyu.worldlogger.mysql.MySQLExecutorService;
 import com.xiaoyu.worldlogger.utils.StringData;
 import net.minecraft.core.BlockPos;
-import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.state.BlockState;
 import net.neoforged.bus.api.SubscribeEvent;
-import net.neoforged.neoforge.event.level.BlockEvent;
+import net.neoforged.neoforge.event.entity.living.LivingDestroyBlockEvent;
 import org.slf4j.Logger;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
 
-
-public class EntityPlaceBlock {
+public class EntityBreakInfo {
     private static final Logger LOGGER = LogUtils.getLogger();
 
     @SubscribeEvent
-    public static void PLAYER_PLACE_INFO(BlockEvent.EntityPlaceEvent event) {
-        Entity entity = event.getEntity();
+    public static void ENTITY_BREAK_INFO(LivingDestroyBlockEvent event) {
+        LivingEntity entity = event.getEntity();
         Level level = entity.level();
-
-        String entityName = StringData.getEntityName(entity);
-        String entityPos = StringData.getPos(event.getEntity());
-        String entityWorld = StringData.getLevelName(entity.level());
-
-        if (entity instanceof ServerPlayer player) {
-            PlayerSessionData data = new PlayerSessionData(player, level);
-
-            entityName = StringData.getEntityName(data);
-        }
-
-        BlockState blockState = event.getPlacedBlock();
+        BlockState blockState = event.getState();
         BlockPos blockPos = event.getPos();
 
         BlockInfoData blockData = new BlockInfoData(blockState, blockPos, level);
 
+        String name = StringData.getEntityName(entity);
+        String pos = StringData.getPos(entity);
+        String world = StringData.getLevelName(level);
+
         String SQL = """
-                     INSERT INTO ENTITY_PLACE_BLOCK(
+                     INSERT INTO ENTITY_BREAK_INFO(
                          entity_name,
                          entity_pos,
                          world,
                          block_id,
                          block_nbt,
                          block_pos
-                     ) VALUES (?, ?, ?, ?, ?, ?)
+                     ) VALUES (?, ?, ?, ?, ?, ?);
                      """;
-
-        String finalEntityName = entityName;
 
         MySQLExecutorService.getExecutor().execute(() -> {
             try (Connection mysqlConnection = InitMySQL.getMySQLConnection()) {
                 try (PreparedStatement statement = mysqlConnection.prepareStatement(SQL)) {
-                    statement.setString(1, finalEntityName);
-                    statement.setString(2, entityPos);
-                    statement.setString(3, entityWorld);
+                    statement.setString(1, name);
+                    statement.setString(2, pos);
+                    statement.setString(3, world);
                     statement.setString(4, blockData.blockID);
                     statement.setString(5, blockData.blockNBT);
                     statement.setString(6, blockData.blockPos);
