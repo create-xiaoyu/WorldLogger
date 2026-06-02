@@ -197,6 +197,20 @@ public class DataBase {
                         )
                         """
             );
+            statement.execute(
+                    """
+                        CREATE TABLE IF NOT EXISTS ENTITY_DEATH_INFO(
+                            data_id INT AUTO_INCREMENT PRIMARY KEY,
+                            time DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                            entity_name VARCHAR(255) NOT NULL,
+                            entity_pos VARCHAR(64),
+                            entity_world VARCHAR(64),
+                            source_name VARCHAR(255),
+                            source_pos VARCHAR(64),
+                            source_world VARCHAR(64)
+                        )
+                        """
+            );
         } catch (SQLException e) {
             LOGGER.error("Error while initializing DataBase!", e);
         }
