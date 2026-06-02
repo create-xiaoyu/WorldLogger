@@ -218,7 +218,7 @@ public class DataBase {
                             time DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
                             entity_name VARCHAR(255) NOT NULL,
                             entity_pos VARCHAR(64),
-                            world VARCHAR(64),
+                            world VARCHAR(64)
                         )
                         """
             );
