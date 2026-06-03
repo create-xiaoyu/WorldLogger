@@ -1,7 +1,6 @@
 package com.xiaoyu.worldlogger.writetable;
 
 import com.google.gson.Gson;
-import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.mojang.logging.LogUtils;
 import com.xiaoyu.worldlogger.data.PlayerSessionData;
@@ -27,13 +26,15 @@ import org.slf4j.Logger;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 public class PlayerContainerInfo {
     private static final Logger LOGGER = LogUtils.getLogger();
-    private static final Map<String, Object> openedContainerData = new HashMap<>();
-    private static final Map<String, Object> modifyContainerData = new HashMap<>();
+    private static final Map<String, Map<Integer, JsonObject>> lastContainerData = new HashMap<>();
+    private static final Map<String, List<ContainerModification>> modifyContainerData = new HashMap<>();
 
     @SubscribeEvent
     public static void onPlayerContainerEventOpen(PlayerContainerEvent.Open event) {
@@ -49,41 +50,44 @@ public class PlayerContainerInfo {
         BlockState containerBlockState = RightClickBlock.getRightClickBlocks(playerHash);
         String containerID = BuiltInRegistries.BLOCK.getKey(containerBlockState.getBlock()).toString();
 
-        openedContainerData.put(playerHash ,ItemDataUtils.getContainerAllData(container, playerData, slotSize));
-
         Gson gson = new Gson();
+        Map<Integer, JsonObject> slotSnapshots = new HashMap<>();
+        for (int i = 0; i < slotSize; i++) {
+            slotSnapshots.put(i, getItemDataJson(gson, container.slots.get(i).getItem()));
+        }
+        lastContainerData.put(playerHash, slotSnapshots);
 
-        Map<String, Object> containerDataMap = new HashMap<>();
-        modifyContainerData.put(playerHash, containerDataMap);
+        List<ContainerModification> containerModifications = new ArrayList<>();
+        modifyContainerData.put(playerHash, containerModifications);
 
         container.addSlotListener(new ContainerListener() {
             @Override
             public void slotChanged(AbstractContainerMenu abstractContainerMenu, int i, ItemStack itemStack) {
                 if (i <  slotSize) {
-                    JsonObject root = gson.toJsonTree(openedContainerData).getAsJsonObject();
-                    JsonObject playerContainerData = root.getAsJsonObject(playerHash);
-                    JsonObject containerData = playerContainerData.getAsJsonObject(
-                            BuiltInRegistries.BLOCK.getKey(containerBlockState.getBlock()).toString()
-                    );
-                    JsonObject slotDataRoot = containerData.getAsJsonObject("slotData");
-                    JsonObject slotData = slotDataRoot.getAsJsonObject(String.valueOf(i));
+                    Map<Integer, JsonObject> lastSlotData = lastContainerData.get(playerHash);
+                    if (lastSlotData == null) return;
 
-                    String modifyType = ContainerUtils.getModifyValue(openedContainerData, playerHash, itemStack, containerBlockState, i);
+                    JsonObject sourceItem = lastSlotData.get(i);
+                    if (sourceItem == null) {
+                        sourceItem = getItemDataJson(gson, ItemStack.EMPTY);
+                    }
+                    JsonObject itemData = getItemDataJson(gson, itemStack);
 
-                    Map<String , Object> data = new HashMap<>();
-                    JsonObject sourceItem = slotData.getAsJsonObject("data");
+                    String modifyType = ContainerUtils.getModifyValue(sourceItem, itemStack);
 
                     if (!(modifyType.equals("no"))) {
-                        data.put("itemData", ItemDataUtils.getItemData(itemStack));
-                        data.put("sourceItem", sourceItem);
-                        data.put("modifyTime", StringData.getTime());
-                        data.put("modifyType", modifyType);
-                        data.put("containerID", containerID);
-                        data.put("containerPos", StringData.getPos(RightClickBlock.getRightClickPos(playerHash)));
-                        containerDataMap.put(String.valueOf(i), data);
-                    } else {
-                        containerDataMap.remove(String.valueOf(i));
+                        containerModifications.add(new ContainerModification(
+                                i,
+                                sourceItem.deepCopy(),
+                                itemData.deepCopy(),
+                                StringData.getTime(),
+                                modifyType,
+                                containerID,
+                                StringData.getPos(RightClickBlock.getRightClickPos(playerHash))
+                        ));
                     }
+
+                    lastSlotData.put(i, itemData.deepCopy());
                 }
             }
 
@@ -91,7 +95,7 @@ public class PlayerContainerInfo {
             public void dataChanged(AbstractContainerMenu abstractContainerMenu, int i, int i1) {}
         });
 
-        LOGGER.info(gson.toJson(openedContainerData));
+        LOGGER.info(gson.toJson(lastContainerData));
     }
 
     @SubscribeEvent
@@ -105,20 +109,19 @@ public class PlayerContainerInfo {
         String playerHash = HashUtils.sha1(playerData.uuid + playerData.name);
         Gson gson = new Gson();
 
-        JsonObject root = gson.toJsonTree(modifyContainerData).getAsJsonObject();
-        JsonObject playerModifyData = root.getAsJsonObject(playerHash);
+        List<ContainerModification> playerModifyData = modifyContainerData.get(playerHash);
 
         LOGGER.info(gson.toJson(modifyContainerData));
 
         if (playerModifyData == null || playerModifyData.isEmpty()) {
-            openedContainerData.remove(playerHash);
+            lastContainerData.remove(playerHash);
             modifyContainerData.remove(playerHash);
             return;
         }
 
-        JsonObject data = playerModifyData.deepCopy();
+        List<ContainerModification> data = List.copyOf(playerModifyData);
 
-        openedContainerData.remove(playerHash);
+        lastContainerData.remove(playerHash);
         modifyContainerData.remove(playerHash);
 
         String SQL = """
@@ -140,28 +143,18 @@ public class PlayerContainerInfo {
         MySQLExecutorService.getExecutor().execute(() -> {
             try (Connection mysqlConnection = InitMySQL.getMySQLConnection()) {
                 try (PreparedStatement statement = mysqlConnection.prepareStatement(SQL)) {
-                    for (Map.Entry<String, JsonElement> slotEntry : data.entrySet()) {
-                        String slotIndex = slotEntry.getKey();
-                        JsonObject slotData = slotEntry.getValue().getAsJsonObject();
-
-                        String modifyType = slotData.get("modifyType").getAsString();
-                        String modifyTime = slotData.get("modifyTime").getAsString();
-                        String containerID = slotData.get("containerID").getAsString();
-                        String containerPos = slotData.get("containerPos").getAsString();
-                        JsonObject itemData = slotData.getAsJsonObject("itemData");
-                        JsonObject sourceItem = slotData.getAsJsonObject("sourceItem");
-
-                        statement.setString(1, modifyTime);
+                    for (ContainerModification modification : data) {
+                        statement.setString(1, modification.modifyTime());
                         statement.setString(2, playerData.uuid);
                         statement.setString(3, playerData.name);
                         statement.setString(4, playerData.pos);
                         statement.setString(5, playerData.world);
-                        statement.setString(6, containerID);
-                        statement.setString(7, containerPos);
-                        statement.setInt(8, Integer.parseInt(slotIndex));
-                        statement.setString(9, sourceItem.toString());
-                        statement.setString(10, itemData.toString());
-                        statement.setString(11, modifyType);
+                        statement.setString(6, modification.containerID());
+                        statement.setString(7, modification.containerPos());
+                        statement.setInt(8, modification.slotIndex());
+                        statement.setString(9, modification.sourceItem().toString());
+                        statement.setString(10, modification.itemData().toString());
+                        statement.setString(11, modification.modifyType());
 
                         statement.executeUpdate();
                     }
@@ -173,4 +166,18 @@ public class PlayerContainerInfo {
             }
         });
     }
+
+    private static JsonObject getItemDataJson(Gson gson, ItemStack itemStack) {
+        return gson.toJsonTree(ItemDataUtils.getItemData(itemStack)).getAsJsonObject();
+    }
+
+    private record ContainerModification(
+            int slotIndex,
+            JsonObject sourceItem,
+            JsonObject itemData,
+            String modifyTime,
+            String modifyType,
+            String containerID,
+            String containerPos
+    ) {}
 }

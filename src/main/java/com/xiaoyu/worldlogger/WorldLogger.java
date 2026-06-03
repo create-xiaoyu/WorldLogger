@@ -2,6 +2,7 @@ package com.xiaoyu.worldlogger;
 
 import com.xiaoyu.worldlogger.command.MainCommand;
 import com.xiaoyu.worldlogger.event.PlayerInteractEvent.RightClickBlock;
+import com.xiaoyu.worldlogger.network.WorldLoggerNetwork;
 import com.xiaoyu.worldlogger.writetable.*;
 import com.xiaoyu.worldlogger.mysql.DataBase;
 import com.xiaoyu.worldlogger.mysql.InitMySQL;
@@ -27,6 +28,8 @@ public class WorldLogger {
     private static final Logger LOGGER = LogUtils.getLogger();
 
     public WorldLogger(ModContainer container, IEventBus modBus) {
+        modBus.addListener(WorldLoggerNetwork::register);
+
         if (FMLEnvironment.getDist().isDedicatedServer()) {
             NeoForge.EVENT_BUS.addListener(WorldLogger::onServerStarted);
             NeoForge.EVENT_BUS.addListener(WorldLogger::onServerStopped);

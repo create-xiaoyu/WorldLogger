@@ -1,13 +1,13 @@
 package com.xiaoyu.worldlogger.utils;
 
 import com.google.gson.Gson;
+import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.state.BlockState;
 
 import java.util.Map;
-import java.util.concurrent.atomic.AtomicReference;
 
 public class ContainerUtils {
     public static String getModifyValue(Map<String, Object> Map, String playerHash, ItemStack itemStack, BlockState blockState, int i) {
@@ -22,66 +22,62 @@ public class ContainerUtils {
         JsonObject slotData = slotDataRoot.getAsJsonObject(String.valueOf(i));
         JsonObject data = slotData.getAsJsonObject("data");
 
+        return getModifyValue(data, itemStack);
+    }
+
+    public static String getModifyValue(JsonObject data, ItemStack itemStack) {
+        Gson gson = new Gson();
+
         String itemName = data.get("item").getAsString();
         int itemCount = data.get("count").getAsInt();
+        String currentItemName = BuiltInRegistries.ITEM.getKey(itemStack.getItem()).toString();
 
-        AtomicReference<String> modifyType = new AtomicReference<>("no");
-
-        if (BuiltInRegistries.ITEM.getKey(itemStack.getItem()).toString().equals(itemName) && !(BuiltInRegistries.ITEM.getKey(itemStack.getItem()).toString().equals("minecraft:air"))) {
+        if (currentItemName.equals(itemName) && !(currentItemName.equals("minecraft:air"))) {
             if (itemStack.getCount() == itemCount) {
-                if (data.has("name")) {
-                    if (!(data.get("name").getAsString().equals(itemStack.getHoverName().getString()))) {
-                        modifyType.set("Modify");
-                    }
-                } else if (!(itemStack.getHoverName().getString().equals(itemStack.getItemName().getString()))) {
-                    modifyType.set("Modify");
-                } else {
-                    modifyType.set("no");
-                }
-                if (data.has("enchantments")) {
-                    JsonObject enchantment = data.getAsJsonObject("enchantments");
-                    itemStack.getTagEnchantments().entrySet().forEach(entry -> {
-                        if (enchantment.has(entry.getKey().getRegisteredName())) {
-                            int level = enchantment.get(entry.getKey().getRegisteredName()).getAsInt();
-                            if (level != entry.getIntValue()) {
-                                modifyType.set("Modify");
-                            } else {
-                                modifyType.set("no");
-                            }
-                        } else {
-                            modifyType.set("Modify");
-                        }
-                    });
-                } else if (itemStack.getTagEnchantments().isEmpty()) {
-                    modifyType.set("no");
-                } else {
-                    modifyType.set("Modify");
-                }
-                if (data.has("custom_data")) {
-                    JsonObject customData = data.get("custom_data").getAsJsonObject();
-                    if (!(customData.equals(gson.toJsonTree(ItemDataUtils.getItemCustomData(itemStack)).getAsJsonObject()))) {
-                        modifyType.set("Modify");
-                    } else {
-                        modifyType.set("no");
-                    }
-                } else if (ItemDataUtils.getItemCustomData(itemStack) == null) {
-                    modifyType.set("no");
-                } else {
-                    modifyType.set("Modify");
-                }
-            } else if (itemStack.getCount() < itemCount) {
-                modifyType.set("Take");
-            } else {
-                modifyType.set("Save");
+                return hasSameItemDetails(gson, data, itemStack) ? "no" : "Modify";
             }
-        } else if (BuiltInRegistries.ITEM.getKey(itemStack.getItem()).toString().equals("minecraft:air")) {
-            modifyType.set("Take");
+
+            return itemStack.getCount() < itemCount ? "Take" : "Save";
+        } else if (currentItemName.equals("minecraft:air")) {
+            return itemName.equals("minecraft:air") ? "no" : "Take";
         } else if (itemName.equals("minecraft:air")) {
-            modifyType.set("Save");
-        } else {
-            modifyType.set("Modify");
+            return "Save";
         }
 
-        return modifyType.get();
+        return "Modify";
+    }
+
+    private static boolean hasSameItemDetails(Gson gson, JsonObject sourceData, ItemStack itemStack) {
+        if (!(hasSameCustomName(sourceData, itemStack))) {
+            return false;
+        }
+
+        if (!(hasSameJsonData(gson, sourceData, "enchantments", ItemDataUtils.getEnchantments(itemStack)))) {
+            return false;
+        }
+
+        return hasSameJsonData(gson, sourceData, "custom_data", ItemDataUtils.getItemCustomData(itemStack));
+    }
+
+    private static boolean hasSameCustomName(JsonObject sourceData, ItemStack itemStack) {
+        if (sourceData.has("name")) {
+            return itemStack.getCustomName() != null
+                    && sourceData.get("name").getAsString().equals(itemStack.getHoverName().getString());
+        }
+
+        return itemStack.getCustomName() == null;
+    }
+
+    private static boolean hasSameJsonData(Gson gson, JsonObject sourceData, String key, Object currentData) {
+        if (sourceData.has(key)) {
+            if (currentData == null) {
+                return false;
+            }
+
+            JsonElement currentJson = gson.toJsonTree(currentData);
+            return sourceData.get(key).equals(currentJson);
+        }
+
+        return currentData == null;
     }
 }

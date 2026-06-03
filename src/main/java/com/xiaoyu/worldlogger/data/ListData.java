@@ -16,10 +16,23 @@ public class ListData {
             "PLAYER_LOGOUT_INFO",
             "PLAYER_LOST_ITEM",
             "PLAYER_XP_INFO",
-            "PLAYER_CHAT_INFO"
+            "SERVER_CHAT_INFO"
     };
 
     public  static String[] getTables() {
         return TABLES;
+    }
+
+    public static String findTable(String value) {
+        for (String table : TABLES) {
+            if (table.equalsIgnoreCase(value)) {
+                return table;
+            }
+        }
+        return null;
+    }
+
+    public static boolean hasTable(String value) {
+        return findTable(value) != null;
     }
 }
