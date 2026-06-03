@@ -3,7 +3,7 @@
   "text.worldlogger.command.worldlogger.select.request": "[世界日志] 已向服务器发送查询请求：%s 第 %d 页",
   "text.worldlogger.command.worldlogger.select.no_permission": "§c你没有权限进行此操作",
   "text.worldlogger.command.worldlogger.select.unknown": "§c未知的表: %s",
-  "text.worldlogger.error.service": "§cMySQL 服务未运行！",
+  "text.worldlogger.error.service": "§cMySQL 服务未运行或未连接到服务器！",
   "text.worldlogger.error.select_error": "查询失败: %s",
   "text.worldlogger.error.executor.reject": "MySQL 拒绝了此任务",
   "text.worldlogger.command.select.next": "点击以显示下一页",
