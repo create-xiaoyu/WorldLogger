@@ -1,5 +1,6 @@
 package com.xiaoyu.worldlogger;
 
+import com.xiaoyu.worldlogger.command.MainCommand;
 import com.xiaoyu.worldlogger.event.PlayerInteractEvent.RightClickBlock;
 import com.xiaoyu.worldlogger.writetable.*;
 import com.xiaoyu.worldlogger.mysql.DataBase;
@@ -44,6 +45,10 @@ public class WorldLogger {
             NeoForge.EVENT_BUS.register(ExplosionBreakBlock.class);
             NeoForge.EVENT_BUS.register(EntityDeathInfo.class);
             NeoForge.EVENT_BUS.register(EntitySpawnInfo.class);
+        }
+
+        if (FMLEnvironment.getDist().isClient()) {
+            NeoForge.EVENT_BUS.register(MainCommand.class);
         }
 
         container.registerConfig(ModConfig.Type.COMMON, Config.SPEC);
