@@ -17,22 +17,38 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
 
+/**
+ * 实体破坏方块记录器。
+ *
+ * <p>这里记录 LivingEntityDestroyBlockEvent，例如生物或模组实体破坏方块。
+ * 玩家普通挖掘由 PlayerBreakInfo 记录。</p>
+ */
 public class EntityBreakInfo {
+    /** 日志对象，用于记录数据库写入失败。 */
     private static final Logger LOGGER = LogUtils.getLogger();
 
+    /**
+     * 生物实体破坏方块时触发。
+     *
+     * @param event 生物破坏方块事件。
+     */
     @SubscribeEvent
     public static void ENTITY_BREAK_INFO(LivingDestroyBlockEvent event) {
+        // 事件提供破坏方块的实体、世界、方块状态和坐标。
         LivingEntity entity = event.getEntity();
         Level level = entity.level();
         BlockState blockState = event.getState();
         BlockPos blockPos = event.getPos();
 
+        // 方块快照。
         BlockInfoData blockData = new BlockInfoData(blockState, blockPos, level);
 
+        // 实体快照。
         String name = StringData.getEntityName(entity);
         String pos = StringData.getPos(entity);
         String world = StringData.getLevelName(level);
 
+        // 记录实体名称、实体坐标、世界、方块 ID、方块 NBT、方块坐标。
         String SQL = """
                      INSERT INTO ENTITY_BREAK_INFO(
                          entity_name,
@@ -44,7 +60,8 @@ public class EntityBreakInfo {
                      ) VALUES (?, ?, ?, ?, ?, ?);
                      """;
 
-        MySQLExecutorService.getExecutor().execute(() -> {
+        // 异步写库。
+        MySQLExecutorService.execute(LOGGER, "write entity block break info", () -> {
             try (Connection mysqlConnection = InitMySQL.getMySQLConnection()) {
                 try (PreparedStatement statement = mysqlConnection.prepareStatement(SQL)) {
                     statement.setString(1, name);

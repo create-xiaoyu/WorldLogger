@@ -17,20 +17,35 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
 
+/**
+ * 玩家破坏方块记录器。
+ *
+ * <p>当玩家破坏方块时，将玩家信息、方块 ID、方块 NBT 和方块坐标写入 PLAYER_BREAK_INFO。</p>
+ */
 public class PlayerBreakInfo {
+    /** 日志对象，用于记录数据库写入失败。 */
     private static final Logger LOGGER = LogUtils.getLogger();
 
+    /**
+     * 玩家破坏方块时触发。
+     *
+     * @param event NeoForge 方块破坏事件。
+     */
     @SubscribeEvent
     public static void PLAYER_BREAK_INFO(BreakBlockEvent event) {
+        // 只记录服务端玩家破坏方块。
         if (!(event.getPlayer() instanceof ServerPlayer player)) return;
         Level level = player.level();
 
+        // 事件提供被破坏方块的状态和坐标。
         BlockState blockState = event.getState();
         BlockPos blockPos = event.getPos();
 
+        // 玩家数据和方块数据都先做成快照，供异步线程使用。
         PlayerSessionData data = new PlayerSessionData(player, level);
         BlockInfoData blockData = new BlockInfoData(blockState, blockPos, level);
 
+        // block_nbt 可能为 null，普通方块没有方块实体数据。
         String SQL = """
                      INSERT INTO PLAYER_BREAK_INFO(
                          player_uuid,
@@ -43,7 +58,8 @@ public class PlayerBreakInfo {
                      ) VALUES (?, ?, ?, ?, ?, ?, ?)
                      """;
 
-        MySQLExecutorService.getExecutor().execute(() -> {
+        // 异步写入破坏记录。
+        MySQLExecutorService.execute(LOGGER, "write player block break info", () -> {
             try (Connection mysqlConnection = InitMySQL.getMySQLConnection()) {
                 try (PreparedStatement statement = mysqlConnection.prepareStatement(SQL)) {
                     statement.setString(1, data.uuid);

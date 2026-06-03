@@ -7,11 +7,30 @@ import java.sql.Connection;
 import java.sql.SQLException;
 import java.sql.Statement;
 
+/**
+ * 数据库表结构初始化类。
+ *
+ * <p>服务器启动时会调用 InitDataBaseTable。每个 CREATE TABLE 都带有 IF NOT EXISTS，
+ * 所以表已经存在时不会清空旧数据，也不会重复创建。</p>
+ *
+ * <p>注意：这个类只负责“创建缺失的表”，不负责后续表结构迁移。
+ * 如果将来要新增字段，最好额外写 ALTER TABLE 检查逻辑。</p>
+ */
 public class DataBase {
+    /** 日志对象，用于记录建表失败的 SQLException。 */
     private static final Logger LOGGER = LogUtils.getLogger();
 
+    /**
+     * 创建 WorldLogger 需要的所有数据库表。
+     *
+     * @param mysqlConnection 已经从 HikariCP 连接池中取得的 MySQL 连接。
+     *
+     * 用法：服务器启动后调用一次。返回值为空，因为失败会通过日志输出。
+     */
     public static void InitDataBaseTable(Connection mysqlConnection) {
+        // Statement 适合执行固定 SQL。try-with-resources 会自动关闭它。
         try (Statement statement = mysqlConnection.createStatement()) {
+            // PLAYER_BASE_INFO：玩家基础表。每个 UUID 只有一行，用于保存玩家名字和总游玩时间。
             statement.execute(
                     """
                     CREATE TABLE IF NOT EXISTS PLAYER_BASE_INFO(
@@ -21,6 +40,8 @@ public class DataBase {
                     )
                     """
             );
+
+            // PLAYER_LOGIN_INFO：玩家登录记录。每次登录都会新增一行，包含 IP、坐标和世界。
             statement.execute(
                     """
                     CREATE TABLE IF NOT EXISTS PLAYER_LOGIN_INFO(
@@ -34,6 +55,8 @@ public class DataBase {
                     )
                     """
             );
+
+            // PLAYER_LOGOUT_INFO：玩家退出记录。每次退出都会新增一行，方便和登录记录配对查看。
             statement.execute(
                     """
                     CREATE TABLE IF NOT EXISTS PLAYER_LOGOUT_INFO(
@@ -46,6 +69,8 @@ public class DataBase {
                     )
                     """
             );
+
+            // PLAYER_DEATH_INFO：玩家死亡记录。death_id 用来和死亡掉落物、死亡经验记录关联。
             statement.execute(
                     """
                     CREATE TABLE IF NOT EXISTS PLAYER_DEATH_INFO(
@@ -65,6 +90,8 @@ public class DataBase {
                     )
                     """
             );
+
+            // PLAYER_LOST_ITEM：玩家丢出或死亡掉落的物品记录。lost_item 是 JSON 文本。
             statement.execute(
                     """
                     CREATE TABLE IF NOT EXISTS PLAYER_LOST_ITEM(
@@ -80,6 +107,8 @@ public class DataBase {
                     )
                     """
             );
+
+            // PLAYER_XP_INFO：玩家经验变化记录。死亡掉落经验和普通经验变化都写入这张表。
             statement.execute(
                     """
                     CREATE TABLE IF NOT EXISTS PLAYER_XP_INFO(
@@ -97,6 +126,8 @@ public class DataBase {
                     )
                     """
             );
+
+            // EXECUTE_COMMAND_INFO：命令执行记录。source 可以是玩家、命令方块、RCON 或控制台。
             statement.execute(
                     """
                     CREATE TABLE IF NOT EXISTS EXECUTE_COMMAND_INFO(
@@ -109,6 +140,8 @@ public class DataBase {
                     )
                     """
             );
+
+            // SERVER_CHAT_INFO：聊天记录。raw_message 是纯文本，component_message 是组件字符串。
             statement.execute(
                     """
                     CREATE TABLE IF NOT EXISTS SERVER_CHAT_INFO(
@@ -123,6 +156,8 @@ public class DataBase {
                     )
                     """
             );
+
+            // PLAYER_CONTAINER_INFO：容器槽位变化记录。source_item 和 modify_item 是变化前后的物品 JSON。
             statement.execute(
                     """
                         CREATE TABLE IF NOT EXISTS PLAYER_CONTAINER_INFO(
@@ -141,6 +176,8 @@ public class DataBase {
                         )
                         """
             );
+
+            // ENTITY_PLACE_BLOCK：任意实体放置方块记录。玩家放方块也会归为实体放置。
             statement.execute(
                     """
                         CREATE TABLE IF NOT EXISTS ENTITY_PLACE_BLOCK(
@@ -155,6 +192,8 @@ public class DataBase {
                         )
                         """
             );
+
+            // PLAYER_BREAK_INFO：玩家破坏方块记录。block_nbt 保存方块实体数据，例如箱子内容。
             statement.execute(
                     """
                         CREATE TABLE IF NOT EXISTS PLAYER_BREAK_INFO(
@@ -170,6 +209,8 @@ public class DataBase {
                         )
                         """
             );
+
+            // ENTITY_BREAK_INFO：非玩家实体破坏方块记录，例如生物破坏门、末影人搬方块等。
             statement.execute(
                     """
                         CREATE TABLE IF NOT EXISTS ENTITY_BREAK_INFO(
@@ -184,6 +225,8 @@ public class DataBase {
                         )
                         """
             );
+
+            // EXPLOSION_BREAK_BLOCK：爆炸破坏方块记录。block_data 是被影响方块列表的 JSON。
             statement.execute(
                     """
                         CREATE TABLE IF NOT EXISTS EXPLOSION_BREAK_BLOCK(
@@ -197,6 +240,8 @@ public class DataBase {
                         )
                         """
             );
+
+            // ENTITY_DEATH_INFO：非玩家实体死亡记录。玩家死亡由 PLAYER_DEATH_INFO 负责记录。
             statement.execute(
                     """
                         CREATE TABLE IF NOT EXISTS ENTITY_DEATH_INFO(
@@ -211,6 +256,8 @@ public class DataBase {
                         )
                         """
             );
+
+            // ENTITY_SPAWN_INFO：非玩家实体生成记录。玩家进入世界由 PLAYER_LOGIN_INFO 负责记录。
             statement.execute(
                     """
                         CREATE TABLE IF NOT EXISTS ENTITY_SPAWN_INFO(
@@ -223,6 +270,7 @@ public class DataBase {
                         """
             );
         } catch (SQLException e) {
+            // 任何一条建表 SQL 失败都会进入这里，日志中会带完整异常栈。
             LOGGER.error("Error while initializing DataBase!", e);
         }
     }
