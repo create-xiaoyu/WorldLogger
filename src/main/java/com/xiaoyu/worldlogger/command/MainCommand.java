@@ -2,10 +2,15 @@ package com.xiaoyu.worldlogger.command;
 
 import com.mojang.brigadier.arguments.IntegerArgumentType;
 import com.mojang.brigadier.arguments.StringArgumentType;
+import com.xiaoyu.worldlogger.client.WorldLoggerClientAiService;
 import com.xiaoyu.worldlogger.client.screen.WorldLoggerGuiScreen;
 import com.xiaoyu.worldlogger.data.ListData;
+import com.xiaoyu.worldlogger.network.payload.AiApprovalRequestPayload;
+import com.xiaoyu.worldlogger.network.payload.AiChatRequestPayload;
+import com.xiaoyu.worldlogger.network.payload.AiResetRequestPayload;
 import com.xiaoyu.worldlogger.network.payload.SearchRequestPayload;
 import com.xiaoyu.worldlogger.network.payload.SelectTableRequestPayload;
+import net.minecraft.client.Minecraft;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
 import net.minecraft.commands.SharedSuggestionProvider;
@@ -62,6 +67,23 @@ public class MainCommand {
                         Commands.literal("gui")
                                 .requires(c -> c.permissions().hasPermission(Permissions.COMMANDS_ADMIN))
                                 .executes(context -> openGui())
+                ).then(
+                        // /worldlogger ai <message>：和 AI 对话；多人服务器发给服务器，单人游戏本地客户端直接调用。
+                        Commands.literal("ai")
+                                .requires(c -> c.permissions().hasPermission(Permissions.COMMANDS_ADMIN))
+                                .then(Commands.literal("reset")
+                                        .executes(context -> resetAi(context.getSource())))
+                                .then(Commands.literal("approve")
+                                        .then(Commands.argument("id", StringArgumentType.string())
+                                                .executes(context -> approveAi(
+                                                        context.getSource(),
+                                                        StringArgumentType.getString(context, "id")
+                                                ))))
+                                .then(Commands.argument("message", StringArgumentType.greedyString())
+                                        .executes(context -> sendAiChat(
+                                                context.getSource(),
+                                                StringArgumentType.getString(context, "message")
+                                        )))
                 )
         );
     }
@@ -110,5 +132,85 @@ public class MainCommand {
     private static int openGui() {
         WorldLoggerGuiScreen.open();
         return 1;
+    }
+
+    /**
+     * 发送 AI 聊天请求。
+     *
+     * @param source 命令来源。
+     * @param message 玩家输入。
+     * @return Brigadier 命令结果。
+     */
+    private static int sendAiChat(CommandSourceStack source, String message) {
+        if (message.isBlank()) {
+            source.sendSystemMessage(Component.translatable("text.worldlogger.ai.error.empty"));
+            return 0;
+        }
+
+        String language = currentLanguage();
+        if (isSingleplayer()) {
+            WorldLoggerClientAiService.chat(message, language);
+        } else {
+            ClientPacketDistributor.sendToServer(new AiChatRequestPayload(message, language));
+            source.sendSystemMessage(Component.translatable("text.worldlogger.ai.request.sent", message));
+        }
+        return 1;
+    }
+
+    /**
+     * 批准 AI 的超深度数据库工具调用。
+     *
+     * @param source 命令来源。
+     * @param approvalId 审批 ID。
+     * @return Brigadier 命令结果。
+     */
+    private static int approveAi(CommandSourceStack source, String approvalId) {
+        if (isSingleplayer()) {
+            source.sendSystemMessage(Component.translatable("text.worldlogger.ai.approval.client_unavailable"));
+            return 0;
+        }
+
+        ClientPacketDistributor.sendToServer(new AiApprovalRequestPayload(approvalId));
+        source.sendSystemMessage(Component.translatable("text.worldlogger.ai.approval.sent", approvalId));
+        return 1;
+    }
+
+    /**
+     * 重置 AI 对话上下文。
+     *
+     * @param source 命令来源。
+     * @return Brigadier 命令结果。
+     */
+    private static int resetAi(CommandSourceStack source) {
+        if (isSingleplayer()) {
+            WorldLoggerClientAiService.reset();
+        } else {
+            ClientPacketDistributor.sendToServer(new AiResetRequestPayload());
+            source.sendSystemMessage(Component.translatable("text.worldlogger.ai.reset.sent"));
+        }
+        return 1;
+    }
+
+    /**
+     * 判断当前客户端是否在单人游戏中。
+     *
+     * @return true 表示当前存在内置单人服务器。
+     */
+    private static boolean isSingleplayer() {
+        Minecraft minecraft = Minecraft.getInstance();
+        return minecraft.hasSingleplayerServer();
+    }
+
+    /**
+     * 读取当前客户端语言代码。
+     *
+     * @return Minecraft 语言代码，例如 zh_cn、en_us。
+     */
+    private static String currentLanguage() {
+        Minecraft minecraft = Minecraft.getInstance();
+        if (minecraft.getLanguageManager() == null) {
+            return "en_us";
+        }
+        return minecraft.getLanguageManager().getSelected();
     }
 }

@@ -1,6 +1,8 @@
 package com.xiaoyu.worldlogger;
 
 import com.xiaoyu.worldlogger.command.MainCommand;
+import com.xiaoyu.worldlogger.ai.AiConfig;
+import com.xiaoyu.worldlogger.ai.AiExecutorService;
 import com.xiaoyu.worldlogger.event.PlayerInteractEvent.RightClickBlock;
 import com.xiaoyu.worldlogger.network.WorldLoggerNetwork;
 import com.xiaoyu.worldlogger.writetable.*;
@@ -72,6 +74,14 @@ public class WorldLogger {
 
         // 注册 common 配置文件，让用户可以修改数据库地址、账号和线程数。
         container.registerConfig(ModConfig.Type.COMMON, Config.SPEC);
+
+        // 注册服务器 AI 配置。专用服务器使用这里的模型、API 地址、密钥和数据库工具深度限制。
+        container.registerConfig(ModConfig.Type.SERVER, AiConfig.SERVER_SPEC);
+
+        // 注册客户端 AI 配置。它只用于单人游戏日常聊天，不包含数据库工具。
+        if (FMLEnvironment.getDist().isClient()) {
+            container.registerConfig(ModConfig.Type.CLIENT, AiConfig.CLIENT_SPEC);
+        }
     }
 
     /**
@@ -109,6 +119,7 @@ public class WorldLogger {
      */
     public static void onServerStopped(ServerStoppedEvent event) {
         MySQLExecutorService.shutdown();
+        AiExecutorService.shutdown();
         InitMySQL.closeHikari();
     }
 }

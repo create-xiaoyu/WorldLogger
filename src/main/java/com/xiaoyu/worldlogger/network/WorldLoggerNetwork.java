@@ -1,8 +1,13 @@
 package com.xiaoyu.worldlogger.network;
 
 import com.mojang.logging.LogUtils;
+import com.xiaoyu.worldlogger.ai.ServerAiService;
 import com.xiaoyu.worldlogger.data.ListData;
 import com.xiaoyu.worldlogger.mysql.MySQLExecutorService;
+import com.xiaoyu.worldlogger.network.payload.AiApprovalRequestPayload;
+import com.xiaoyu.worldlogger.network.payload.AiChatRequestPayload;
+import com.xiaoyu.worldlogger.network.payload.AiChatResponsePayload;
+import com.xiaoyu.worldlogger.network.payload.AiResetRequestPayload;
 import com.xiaoyu.worldlogger.network.payload.GuiTableRequestPayload;
 import com.xiaoyu.worldlogger.network.payload.GuiTableResponsePayload;
 import com.xiaoyu.worldlogger.network.payload.SearchRequestPayload;
@@ -52,7 +57,7 @@ public final class WorldLoggerNetwork {
     private static final Logger LOGGER = LogUtils.getLogger();
 
     /** 网络协议版本。客户端和服务器版本不一致时，NeoForge 会拒绝互通这些包。 */
-    private static final String NETWORK_VERSION = "6";
+    private static final String NETWORK_VERSION = "9";
 
     /** 工具类不需要创建对象，所以构造方法私有化。 */
     private WorldLoggerNetwork() {}
@@ -106,6 +111,34 @@ public final class WorldLoggerNetwork {
                 GuiTableResponsePayload.TYPE,
                 GuiTableResponsePayload.STREAM_CODEC,
                 WorldLoggerNetwork::handleGuiTableResponse
+        );
+
+        // AI 聊天请求：客户端 -> 服务器。
+        registrar.playToServer(
+                AiChatRequestPayload.TYPE,
+                AiChatRequestPayload.STREAM_CODEC,
+                WorldLoggerNetwork::handleAiChatRequest
+        );
+
+        // AI 深度审批请求：客户端 -> 服务器。
+        registrar.playToServer(
+                AiApprovalRequestPayload.TYPE,
+                AiApprovalRequestPayload.STREAM_CODEC,
+                WorldLoggerNetwork::handleAiApprovalRequest
+        );
+
+        // AI 对话重置请求：客户端 -> 服务器。
+        registrar.playToServer(
+                AiResetRequestPayload.TYPE,
+                AiResetRequestPayload.STREAM_CODEC,
+                WorldLoggerNetwork::handleAiResetRequest
+        );
+
+        // AI 回复：服务器 -> 客户端。
+        registrar.playToClient(
+                AiChatResponsePayload.TYPE,
+                AiChatResponsePayload.STREAM_CODEC,
+                WorldLoggerNetwork::handleAiChatResponse
         );
     }
 
@@ -284,7 +317,9 @@ public final class WorldLoggerNetwork {
         if (payload.truncated() && !payload.hasNext()) {
             context.player().sendSystemMessage(Component.translatable("text.worldlogger.search.truncated").withStyle(ChatFormatting.GRAY));
         }
-        context.player().sendSystemMessage(Component.literal(pageDivider("WorldLogger Search", payload.page())).withStyle(ChatFormatting.GRAY));
+        // 分页线需要按标题长度补齐，所以先在客户端把标题翻译成当前语言的普通字符串。
+        String searchTitle = Component.translatable("text.worldlogger.search.title").getString();
+        context.player().sendSystemMessage(Component.literal(pageDivider(searchTitle, payload.page())).withStyle(ChatFormatting.GRAY));
 
         if (payload.hasNext()) {
             context.player().sendSystemMessage(nextSearchPageComponent(payload));
@@ -355,6 +390,110 @@ public final class WorldLoggerNetwork {
     private static void handleGuiTableResponse(GuiTableResponsePayload payload, IPayloadContext context) {
         // 客户端 UI 操作放进 enqueueWork，确保在客户端安全线程中执行。
         context.enqueueWork(() -> invokeClientGuiHandler(payload));
+    }
+
+    /**
+     * 服务器处理 AI 聊天请求。
+     *
+     * @param payload 玩家输入文本。
+     * @param context 网络上下文。
+     */
+    private static void handleAiChatRequest(AiChatRequestPayload payload, IPayloadContext context) {
+        Player player = context.player();
+        if (!(player instanceof ServerPlayer serverPlayer)) {
+            return;
+        }
+
+        if (!serverPlayer.permissions().hasPermission(Permissions.COMMANDS_ADMIN)) {
+            sendToPlayer(serverPlayer, AiChatResponsePayload.error("text.worldlogger.command.worldlogger.select.no_permission"));
+            return;
+        }
+
+        if (payload.message().isBlank()) {
+            sendToPlayer(serverPlayer, AiChatResponsePayload.error("text.worldlogger.ai.error.empty"));
+            return;
+        }
+
+        ServerAiService.chat(serverPlayer, payload.message(), payload.language());
+    }
+
+    /** 服务器处理 AI 深度审批请求。 */
+    private static void handleAiApprovalRequest(AiApprovalRequestPayload payload, IPayloadContext context) {
+        Player player = context.player();
+        if (!(player instanceof ServerPlayer serverPlayer)) {
+            return;
+        }
+
+        if (!serverPlayer.permissions().hasPermission(Permissions.COMMANDS_ADMIN)) {
+            sendToPlayer(serverPlayer, AiChatResponsePayload.error("text.worldlogger.command.worldlogger.select.no_permission"));
+            return;
+        }
+
+        ServerAiService.approve(serverPlayer, payload.approvalId());
+    }
+
+    /** 服务器处理 AI 对话重置请求。 */
+    private static void handleAiResetRequest(AiResetRequestPayload payload, IPayloadContext context) {
+        Player player = context.player();
+        if (!(player instanceof ServerPlayer serverPlayer)) {
+            return;
+        }
+
+        if (!serverPlayer.permissions().hasPermission(Permissions.COMMANDS_ADMIN)) {
+            sendToPlayer(serverPlayer, AiChatResponsePayload.error("text.worldlogger.command.worldlogger.select.no_permission"));
+            return;
+        }
+
+        ServerAiService.reset(serverPlayer);
+    }
+
+    /** 客户端处理 AI 响应并显示到聊天栏。 */
+    private static void handleAiChatResponse(AiChatResponsePayload payload, IPayloadContext context) {
+        if (isAiApprovalRequired(payload)) {
+            context.player().sendSystemMessage(aiApprovalRequiredComponent(payload));
+            return;
+        }
+
+        if (!(payload.messageKey().isBlank())) {
+            MutableComponent component = Component.translatable(payload.messageKey(), payload.messageArgs().toArray());
+            context.player().sendSystemMessage(component.withStyle(payload.success() ? ChatFormatting.GRAY : ChatFormatting.RED));
+            return;
+        }
+
+        // AI 普通回复已经在 payload 中保存为 Component，客户端直接显示即可。
+        // 这样后续如果服务端生成带颜色、hover 或 click 的 AI 回复，不需要再改客户端显示逻辑。
+        context.player().sendSystemMessage(payload.message());
+    }
+
+    /** 判断 AI 响应是否为“需要玩家审批深度查询”。 */
+    private static boolean isAiApprovalRequired(AiChatResponsePayload payload) {
+        return "text.worldlogger.ai.approval.required".equals(payload.messageKey())
+                && payload.messageArgs().size() >= 4;
+    }
+
+    /** 创建带点击事件的 AI 审批提示。 */
+    private static MutableComponent aiApprovalRequiredComponent(AiChatResponsePayload payload) {
+        String approvalId = payload.messageArgs().get(0);
+        String requestedDepth = payload.messageArgs().get(1);
+        String autoLimit = payload.messageArgs().get(2);
+        String approvedLimit = payload.messageArgs().get(3);
+        String command = "/worldlogger ai approve " + approvalId;
+
+        MutableComponent approveButton = Component.translatable("text.worldlogger.ai.approval.click")
+                .withStyle(style -> style
+                        .withColor(ChatFormatting.AQUA)
+                        .withUnderlined(true)
+                        .withClickEvent(new ClickEvent.RunCommand(command))
+                        .withHoverEvent(new HoverEvent.ShowText(Component.translatable("text.worldlogger.ai.approval.hover", command))));
+
+        return Component.translatable(
+                "text.worldlogger.ai.approval.required",
+                approvalId,
+                requestedDepth,
+                autoLimit,
+                approvedLimit,
+                approveButton
+        ).withStyle(ChatFormatting.YELLOW);
     }
 
     /** 把查询服务的列数据转换成 select 响应包的行数据。 */
@@ -438,7 +577,9 @@ public final class WorldLoggerNetwork {
 
     /** 根据列名生成语言文件 key。 */
     private static String columnTranslationKey(String columnName) {
-        return "text.worldlogger.name." + columnName;
+        // 数据库里有些列名可能是大写或混合大小写，例如 PLAYER_LOGIN_INFO.IP。
+        // 语言文件统一使用小写 key，所以这里先转小写，避免客户端回退显示原始列名。
+        return "text.worldlogger.name." + columnName.toLowerCase(Locale.ROOT);
     }
 
     /** 包装 TableQueryService 的 SQLException，让 CompletableFuture 能统一处理异常。 */
@@ -480,6 +621,11 @@ public final class WorldLoggerNetwork {
 
     /** 发送 GUI 响应包给指定玩家。 */
     private static void sendToPlayer(ServerPlayer player, GuiTableResponsePayload payload) {
+        PacketDistributor.sendToPlayer(player, payload);
+    }
+
+    /** 发送 AI 响应包给指定玩家。 */
+    private static void sendToPlayer(ServerPlayer player, AiChatResponsePayload payload) {
         PacketDistributor.sendToPlayer(player, payload);
     }
 

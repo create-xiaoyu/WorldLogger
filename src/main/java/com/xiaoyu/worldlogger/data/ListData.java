@@ -31,8 +31,9 @@ public class ListData {
      *
      * @return 当前模组允许展示和查询的所有表名。
      */
-    public  static String[] getTables() {
-        return TABLES;
+    public static String[] getTables() {
+        // 返回副本而不是原数组，防止调用方意外修改白名单，影响 SQL 安全校验。
+        return TABLES.clone();
     }
 
     /**

@@ -65,6 +65,13 @@ WorldLogger 当前记录的数据包括：
   - 一页显示一条记录。
   - GUI 中可以查看更完整的原始字段，例如 JSON、NBT、长文本。
 
+- `/worldlogger ai <message>`
+  - 和 OpenAI GPT 系列模型对话。
+  - 多人服务器使用服务器 AI 配置，并允许 AI 在需要时调用只读数据库工具分析数据。
+  - 单人游戏使用客户端 AI 配置，只支持日常聊天，不访问数据库。
+  - 请求会携带玩家客户端语言代码，AI 会按执行命令玩家的客户端语言回答。
+  - 如果 AI 请求的数据库搜索深度超过服务器配置的自动限制，聊天栏会显示可点击的审批提示。
+
 ## 快速开始
 
 ### 1. 准备 MySQL
@@ -584,6 +591,243 @@ BlockInfoData blockData = new BlockInfoData(blockState, blockPos, level);
 - 一页显示一条记录。
 - 支持查看较长原始字段。
 - 支持滚轮和滚动条拖动。
+
+### `/worldlogger ai <message>`
+
+和 AI 对话。
+
+示例：
+
+```text
+/worldlogger ai 你好，帮我解释一下这个模组的日志表结构
+/worldlogger ai 总结一下最近的玩家死亡和容器变化
+/worldlogger ai 帮我分析 PLAYER_CONTAINER_INFO 里有没有异常的大量取出记录
+```
+
+多人服务器中，命令会发送到服务器：
+
+- 使用服务器配置文件中的 API 地址、API Key 和模型。
+- AI 可以调用只读数据库工具。
+- 请求会附带玩家客户端语言代码，例如 `zh_cn` 或 `en_us`，服务端会把它写进 AI 提示词，避免数据库内容或旧上下文把回答语言带偏。
+- 当玩家询问“某个玩家最近一次进入游戏后做了什么”时，提示词会要求 AI 优先调用专用的玩家活动时间线工具，而不是只列出表名。
+- 服务器会重新检查管理员权限。
+
+单人游戏中，命令会直接在客户端调用 AI：
+
+- 使用客户端配置文件。
+- 不调用数据库工具。
+- 不会查询、总结或分析任何数据库记录，也不会把 `/worldlogger gui`、`/worldlogger select`、`/worldlogger search` 当成客户端 AI 的数据库查询替代方案。
+- 只能日常聊天和回答一般问题；需要 AI 分析数据库时，要在多人服务器/服务端 AI 环境中执行。
+
+### `/worldlogger ai approve <id>`
+
+批准 AI 的超深度数据库查询。
+
+当 AI 想读取的数据库深度超过 `max_auto_search_depth` 时，服务器不会立刻执行工具，而是返回提示：
+
+```text
+AI 想以深度 80 查询数据库，超过了自动限制 3。
+批准后最多按配置上限 20 条执行。[点击以同意本次搜索]
+```
+
+玩家可以直接点击聊天栏中的审批文本，也可以手动执行：
+
+```text
+/worldlogger ai approve ABCD1234
+```
+
+审批只对当前这一次工具调用有效，并且会在一段时间后过期。即使 AI 请求了比 `max_approved_search_depth` 更大的深度，实际工具读取数量也会被裁剪到配置上限。
+
+### `/worldlogger ai reset`
+
+重置当前玩家的 AI 对话上下文。
+
+WorldLogger AI 会保存玩家上一轮 OpenAI `response_id`，用于让模型延续上下文。如果想重新开始对话，可以执行：
+
+```text
+/worldlogger ai reset
+```
+
+## AI 功能说明
+
+WorldLogger 的 AI 功能使用 OpenAI Responses API。项目没有引入 OpenAI SDK，而是使用 Java 25 自带的 `HttpClient` 直接发 HTTP 请求。
+
+这样做的原因：
+
+- 依赖更少。
+- 更容易支持 OpenAI 兼容 API 地址。
+- 用户可以通过配置切换模型、API 地址和密钥。
+
+### AI 配置
+
+AI 配置分为两套。
+
+#### 服务器配置
+
+服务器配置用于多人服务器：
+
+```toml
+enabled = false
+api_base_url = "https://api.openai.com/v1"
+api_key = ""
+model = "gpt-5.5"
+max_auto_search_depth = 3
+max_approved_search_depth = 20
+max_tool_iterations = 6
+max_output_tokens = 1200
+request_timeout_seconds = 60
+debug_log_payloads = false
+```
+
+字段说明：
+
+- `enabled`
+  - 是否启用服务器 AI。
+
+- `api_base_url`
+  - OpenAI 或 OpenAI 兼容 API 地址。
+  - 默认是 `https://api.openai.com/v1`。
+
+- `api_key`
+  - API 密钥。
+  - 不要提交到公开仓库。
+
+- `model`
+  - 使用的 GPT 系列模型名。
+  - 可以按需要改成其他支持 Responses API 的模型。
+
+- `max_auto_search_depth`
+  - AI 不需要玩家确认时，最多可以读取多少条数据库数据。
+
+- `max_approved_search_depth`
+  - 玩家确认后，AI 最多可以读取多少条数据库数据。
+  - 这是绝对上限，用来防止一次请求读取过多数据。
+
+- `max_tool_iterations`
+  - 一轮 AI 请求中最多允许多少次工具调用循环。
+
+- `max_output_tokens`
+  - AI 回复最大 token 数。
+
+- `request_timeout_seconds`
+  - OpenAI HTTP 请求超时时间。
+
+- `debug_log_payloads`
+  - 是否把发送给 OpenAI 的请求体和 OpenAI 返回的响应体写入 DEBUG 日志。
+  - 默认关闭，因为请求体和响应体可能包含玩家聊天、提示词、工具输出和数据库查询结果。
+  - 这个日志不会打印 `Authorization` 请求头，因此不会主动输出 API Key。
+  - 需要日志级别允许 DEBUG 输出时才会显示，通常会进入 Minecraft/服务器的 `latest.log`。
+
+#### 客户端配置
+
+客户端配置用于单人游戏：
+
+```toml
+enabled = false
+api_base_url = "https://api.openai.com/v1"
+api_key = ""
+model = "gpt-5.5"
+max_output_tokens = 1000
+request_timeout_seconds = 60
+debug_log_payloads = false
+```
+
+客户端 AI 不包含数据库工具。原因是客户端没有 MySQL 连接池，也不应该直接读取服务器数据库。因此客户端 AI 的提示词会明确禁止它声称自己查询过数据库，也不会建议玩家通过 GUI 或查询命令绕过这个限制；数据库总结、玩家行为分析、命令历史分析等功能都必须交给服务器 AI。
+
+客户端配置里的 `debug_log_payloads` 只记录客户端 AI 的请求体和响应体，仍然可能包含玩家输入，所以也建议只在排查问题时临时打开。它同样需要日志级别允许 DEBUG 输出。
+
+### AI 工具
+
+服务器 AI 当前提供以下只读工具：
+
+| 工具名 | 作用 |
+| --- | --- |
+| `worldlogger_list_tables` | 列出允许查询的 WorldLogger 表 |
+| `worldlogger_describe_table` | 查看某张表的字段和总行数 |
+| `worldlogger_query_table` | 查询某张表的若干行 |
+| `worldlogger_search_near_player` | 搜索执行命令玩家附近的记录 |
+| `worldlogger_player_activity_after_latest_login` | 查找指定玩家最近一次登录后的跨表活动时间线 |
+
+工具安全限制：
+
+- 所有工具只读，不会写数据库。
+- 表名必须来自 `ListData` 白名单。
+- 搜索值使用 `PreparedStatement` 参数绑定。
+- 字段值会被截断，避免把完整 NBT 或大 JSON 全量发给模型。
+- 物品 JSON 会尽量压缩成物品 ID，减少把 `custom_data`、NBT 等大字段发送给模型。
+- 搜索深度超过自动限制时，需要玩家点击确认；确认后仍不能超过 `max_approved_search_depth`。
+
+### AI 富文本回复
+
+AI 最终回复会优先使用 WorldLogger 约定的富文本 JSON，再由 `AiComponentFormatter` 转成 Minecraft `Component`：
+
+```json
+{"worldlogger_component":[{"text":"结论","color":"gold","bold":true},{"text":"\n没有发现明显异常。","color":"green"}]}
+```
+
+支持的片段字段包括：
+
+- `text`、`color`、`bold`、`italic`、`underlined`、`strikethrough`、`obfuscated`
+- `hover_text`、`insertion`、`font`、`shadow_color`、`no_shadow`，其中 `hover_text` 可以是普通文本，也可以是富文本片段对象或数组
+- `click`，支持 `open_url`、`suggest_command`、`copy_to_clipboard`、`change_page`
+- `run_command` 只允许 `/worldlogger select`、`/worldlogger search`、`/worldlogger gui` 这类查看命令
+
+如果 AI 没有按 JSON 格式返回，代码会退回普通文本显示，并把常见 Markdown 标记如 `**加粗**`、反引号代码片段转成基础 Component 样式。
+
+### AI 工具调用流程
+
+完整流程如下：
+
+```text
+玩家执行 /worldlogger ai ...
+    ↓
+客户端把请求发给服务器
+    ↓
+服务器调用 OpenAI Responses API
+    ↓
+模型判断是否需要数据库工具
+    ↓
+如果不需要工具：直接回复
+    ↓
+如果需要工具：服务器检查搜索深度
+    ↓
+深度未超过限制：执行只读数据库工具
+    ↓
+深度超过限制：暂停并显示可点击审批提示
+    ↓
+玩家点击审批后：按 max_approved_search_depth 上限继续执行工具
+    ↓
+工具结果发回 OpenAI
+    ↓
+模型根据工具结果总结并返回
+    ↓
+服务器把最终答案发给玩家聊天栏
+```
+
+### 为什么要审批搜索深度
+
+AI 分析数据库时可能会请求比较大的读取深度，例如：
+
+```text
+读取 PLAYER_CONTAINER_INFO 最新 100 条
+```
+
+这会带来三个问题：
+
+1. 数据库压力变大。
+2. 发送给模型的数据量变多。
+3. 可能包含更多玩家行为隐私。
+
+因此服务器有两个限制：
+
+- `max_auto_search_depth`
+  - AI 可以自动执行的深度。
+
+- `max_approved_search_depth`
+  - 玩家确认后仍然不能超过的最大深度。
+  - 如果 AI 请求 80 条，而这里配置为 20 条，实际执行时只会读取 20 条。
+
+这样 AI 可以自己判断需要多少数据，但超过自动范围时，最终决定权仍然在执行命令的人手里。聊天栏的审批文本可以点击执行，也保留 `/worldlogger ai approve <id>` 作为手动方式。
 
 ## 开发注意事项
 

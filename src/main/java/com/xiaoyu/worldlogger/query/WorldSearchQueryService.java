@@ -13,6 +13,7 @@ import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Locale;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -394,7 +395,8 @@ public final class WorldSearchQueryService {
         if (modifyType == null || modifyType.isBlank()) {
             return "unknown";
         }
-        return modifyType.trim().toLowerCase().replaceAll("[^a-z0-9_.-]", "_");
+        // modifyType 会变成语言 key 的一部分，必须使用 Locale.ROOT 得到稳定的小写结果。
+        return modifyType.trim().toLowerCase(Locale.ROOT).replaceAll("[^a-z0-9_.-]", "_");
     }
 
     /** 一页附近搜索结果。 */

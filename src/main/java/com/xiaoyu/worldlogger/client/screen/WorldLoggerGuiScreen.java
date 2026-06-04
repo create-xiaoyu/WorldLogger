@@ -16,6 +16,7 @@ import net.neoforged.neoforge.client.network.ClientPacketDistributor;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Locale;
 
 /**
  * WorldLogger 数据库查看 GUI。
@@ -785,7 +786,8 @@ public class WorldLoggerGuiScreen extends Screen {
 
     /** 根据数据库列名生成语言文件 key。 */
     private static String columnTranslationKey(String columnName) {
-        return "text.worldlogger.name." + columnName.toLowerCase();
+        // Locale.ROOT 避免某些系统语言环境下大小写转换出现特殊规则，语言 key 必须稳定。
+        return "text.worldlogger.name." + columnName.toLowerCase(Locale.ROOT);
     }
 
     /** 把 value 限制在 min 和 max 之间。 */
