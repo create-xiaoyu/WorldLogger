@@ -39,22 +39,22 @@ public final class AiConfig {
     /** 不需要二次确认的最大自动搜索深度。 */
     public static final ModConfigSpec.IntValue SERVER_MAX_AUTO_SEARCH_DEPTH = SERVER_BUILDER
             .comment("Maximum database search depth the AI may use without player approval.")
-            .defineInRange("max_auto_search_depth", 3, 1, 128);
+            .defineInRange("max_auto_search_depth", 20, 1, 128);
 
     /** 玩家确认后允许的最大搜索深度，防止一次请求把数据库大量内容发给模型。 */
     public static final ModConfigSpec.IntValue SERVER_MAX_APPROVED_SEARCH_DEPTH = SERVER_BUILDER
             .comment("Maximum database search depth after player approval.")
-            .defineInRange("max_approved_search_depth", 20, 1, 512);
+            .defineInRange("max_approved_search_depth", 256, 1, 512);
 
     /** 单轮 AI 对话最多允许多少次工具调用循环。 */
     public static final ModConfigSpec.IntValue SERVER_MAX_TOOL_ITERATIONS = SERVER_BUILDER
             .comment("Maximum tool-call iterations in one AI request.")
-            .defineInRange("max_tool_iterations", 6, 1, 32);
+            .defineInRange("max_tool_iterations", 16, 1, 32);
 
     /** AI 最多输出多少 token。 */
     public static final ModConfigSpec.IntValue SERVER_MAX_OUTPUT_TOKENS = SERVER_BUILDER
             .comment("Maximum output tokens for one AI response.")
-            .defineInRange("max_output_tokens", 1200, 128, 16000);
+            .defineInRange("max_output_tokens", 5000, 128, 16000);
 
     /** HTTP 请求超时时间。 */
     public static final ModConfigSpec.IntValue SERVER_REQUEST_TIMEOUT_SECONDS = SERVER_BUILDER
@@ -89,7 +89,7 @@ public final class AiConfig {
     /** 客户端 AI 输出 token 上限。 */
     public static final ModConfigSpec.IntValue CLIENT_MAX_OUTPUT_TOKENS = CLIENT_BUILDER
             .comment("Maximum output tokens for one client-side AI response.")
-            .defineInRange("max_output_tokens", 1000, 128, 16000);
+            .defineInRange("max_output_tokens", 5000, 128, 16000);
 
     /** 客户端 HTTP 超时时间。 */
     public static final ModConfigSpec.IntValue CLIENT_REQUEST_TIMEOUT_SECONDS = CLIENT_BUILDER

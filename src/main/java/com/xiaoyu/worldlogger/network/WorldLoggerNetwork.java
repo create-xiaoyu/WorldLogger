@@ -57,7 +57,7 @@ public final class WorldLoggerNetwork {
     private static final Logger LOGGER = LogUtils.getLogger();
 
     /** 网络协议版本。客户端和服务器版本不一致时，NeoForge 会拒绝互通这些包。 */
-    private static final String NETWORK_VERSION = "9";
+    private static final String NETWORK_VERSION = "10";
 
     /** 工具类不需要创建对象，所以构造方法私有化。 */
     private WorldLoggerNetwork() {}
@@ -243,12 +243,6 @@ public final class WorldLoggerNetwork {
     private static void handleSearchRequest(SearchRequestPayload payload, IPayloadContext context) {
         Player player = context.player();
         if (!(player instanceof ServerPlayer serverPlayer)) {
-            return;
-        }
-
-        // nearby search 也属于管理员查询功能，所以必须检查权限。
-        if (!serverPlayer.permissions().hasPermission(Permissions.COMMANDS_ADMIN)) {
-            sendToPlayer(serverPlayer, SearchResponsePayload.error(payload.page(), "text.worldlogger.command.worldlogger.select.no_permission"));
             return;
         }
 

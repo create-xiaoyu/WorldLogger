@@ -55,7 +55,6 @@ public class MainCommand {
                 ).then(
                         // /worldlogger search [page]：以玩家当前位置为中心，搜索附近 16 格内的记录。
                         Commands.literal("search")
-                                .requires(c -> c.permissions().hasPermission(Permissions.COMMANDS_ADMIN))
                                 .executes(context -> sendSearchRequest(context.getSource(), 1))
                                 .then(Commands.argument("page", IntegerArgumentType.integer(1))
                                         .executes(context -> sendSearchRequest(
