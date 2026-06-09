@@ -3,6 +3,7 @@ package com.xiaoyu.worldlogger;
 import com.xiaoyu.worldlogger.command.MainCommand;
 import com.xiaoyu.worldlogger.ai.AiConfig;
 import com.xiaoyu.worldlogger.ai.AiExecutorService;
+import com.xiaoyu.worldlogger.event.CommandEvent.ExecuteCommands;
 import com.xiaoyu.worldlogger.event.PlayerInteractEvent.RightClickBlock;
 import com.xiaoyu.worldlogger.network.WorldLoggerNetwork;
 import com.xiaoyu.worldlogger.writetable.*;
@@ -65,6 +66,7 @@ public class WorldLogger {
             NeoForge.EVENT_BUS.register(ExplosionBreakBlock.class);
             NeoForge.EVENT_BUS.register(EntityDeathInfo.class);
             NeoForge.EVENT_BUS.register(EntitySpawnInfo.class);
+            NeoForge.EVENT_BUS.register(ExecuteCommands.class);
         }
 
         // 客户端注册 /worldlogger 命令入口。命令本身在客户端执行，但数据库查询由服务器完成。

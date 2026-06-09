@@ -3,8 +3,10 @@ package com.xiaoyu.worldlogger.writetable;
 import com.google.gson.Gson;
 import com.mojang.logging.LogUtils;
 import com.xiaoyu.worldlogger.data.PlayerSessionData;
+import com.xiaoyu.worldlogger.event.CommandEvent.ExecuteCommands;
 import com.xiaoyu.worldlogger.mysql.InitMySQL;
 import com.xiaoyu.worldlogger.mysql.MySQLExecutorService;
+import com.xiaoyu.worldlogger.utils.HashUtils;
 import com.xiaoyu.worldlogger.utils.ItemDataUtils;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.level.Level;
@@ -39,6 +41,17 @@ public class PlayerLostItem {
 
         // 捕获玩家快照。
         PlayerSessionData data = new PlayerSessionData(player, level);
+
+        // 玩家哈希值
+        String playerHash = HashUtils.sha1(data.uuid + data.name);
+
+        // 不记录 give 命令的触发
+        if (ExecuteCommands.getExecuteCommand(playerHash).equals("give")) {
+            return;
+        }
+
+        // 及时清理，以确保之后的丢弃物品逻辑不会被跳过
+        ExecuteCommands.clear(playerHash);
 
         // 普通丢物没有 death_id，所以只写 lost_type、位置、世界和物品 JSON。
         String SQL = """

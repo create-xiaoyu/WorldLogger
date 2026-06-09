@@ -2,6 +2,7 @@ package com.xiaoyu.worldlogger.writetable;
 
 import com.mojang.logging.LogUtils;
 import com.xiaoyu.worldlogger.data.PlayerSessionData;
+import com.xiaoyu.worldlogger.event.CommandEvent.ExecuteCommands;
 import com.xiaoyu.worldlogger.event.PlayerInteractEvent.RightClickBlock;
 import com.xiaoyu.worldlogger.mysql.InitMySQL;
 import com.xiaoyu.worldlogger.mysql.MySQLExecutorService;
@@ -83,5 +84,6 @@ public class PlayerInfo {
         String playerHash = HashUtils.sha1(player.getStringUUID() + player.getName().getString());
         RightClickBlock.clear(playerHash);
         PlayerDeathInfo.clear(playerHash);
+        ExecuteCommands.clear(playerHash);
     }
 }
