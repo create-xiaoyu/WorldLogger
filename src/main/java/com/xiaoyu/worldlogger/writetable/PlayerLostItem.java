@@ -44,10 +44,14 @@ public class PlayerLostItem {
 
         // 玩家哈希值
         String playerHash = HashUtils.sha1(data.uuid + data.name);
+        String command = ExecuteCommands.getExecuteCommand(playerHash);
 
         // 不记录 give 命令的触发
-        if (ExecuteCommands.getExecuteCommand(playerHash).equals("give")) {
-            return;
+        if (command != null) {
+            if (command.equals("give")) {
+                ExecuteCommands.clear(playerHash);
+                return;
+            }
         }
 
         // 及时清理，以确保之后的丢弃物品逻辑不会被跳过
