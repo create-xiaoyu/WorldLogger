@@ -74,15 +74,17 @@ public class WorldLogger {
             NeoForge.EVENT_BUS.register(MainCommand.class);
         }
 
-        // 注册 common 配置文件，让用户可以修改数据库地址、账号和线程数。
-        container.registerConfig(ModConfig.Type.COMMON, Config.SPEC);
+        if (FMLEnvironment.getDist().isDedicatedServer()) {
+            // 注册 common 配置文件，让用户可以修改数据库地址、账号和线程数。
+            container.registerConfig(ModConfig.Type.SERVER, Config.SPEC, "worldlogger/config.toml");
 
-        // 注册服务器 AI 配置。专用服务器使用这里的模型、API 地址、密钥和数据库工具深度限制。
-        container.registerConfig(ModConfig.Type.SERVER, AiConfig.SERVER_SPEC);
+            // 注册服务器 AI 配置。专用服务器使用这里的模型、API 地址、密钥和数据库工具深度限制。
+            container.registerConfig(ModConfig.Type.SERVER, AiConfig.SERVER_SPEC, "worldlogger/ai.toml");
+        }
 
         // 注册客户端 AI 配置。它只用于单人游戏日常聊天，不包含数据库工具。
         if (FMLEnvironment.getDist().isClient()) {
-            container.registerConfig(ModConfig.Type.CLIENT, AiConfig.CLIENT_SPEC);
+            container.registerConfig(ModConfig.Type.CLIENT, AiConfig.CLIENT_SPEC, "worldlogger/ai.toml");
         }
     }
 
