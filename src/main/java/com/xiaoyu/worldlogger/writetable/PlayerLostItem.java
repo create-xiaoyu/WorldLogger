@@ -54,9 +54,6 @@ public class PlayerLostItem {
             }
         }
 
-        // 及时清理，以确保之后的丢弃物品逻辑不会被跳过
-        ExecuteCommands.clear(playerHash);
-
         // 普通丢物没有 death_id，所以只写 lost_type、位置、世界和物品 JSON。
         String SQL = """
                      INSERT INTO PLAYER_LOST_ITEM(
